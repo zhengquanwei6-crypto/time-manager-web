@@ -13,6 +13,23 @@ import type {
   WeekTaskGroup,
 } from '../types/task';
 
+export function isTaskItem(value: unknown): value is TaskItem {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const maybeTask = value as TaskItem;
+
+  return (
+    typeof maybeTask.id === 'string' &&
+    typeof maybeTask.title === 'string' &&
+    (typeof maybeTask.deadline === 'string' || maybeTask.deadline === null) &&
+    typeof maybeTask.completed === 'boolean' &&
+    typeof maybeTask.createdAt === 'string' &&
+    (typeof maybeTask.completedAt === 'string' || maybeTask.completedAt === null)
+  );
+}
+
 export function generateId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -28,59 +45,6 @@ export function createTask(input: TaskFormInput): TaskItem {
     createdAt: now,
     completedAt: null,
   };
-}
-
-export function createMockTasks(): TaskItem[] {
-  const now = dayjs();
-
-  return sortTasksByDeadline([
-    {
-      id: 'task_demo_1',
-      title: '整理今天最重要的 3 件事',
-      deadline: now.add(2, 'hour').toISOString(),
-      completed: false,
-      createdAt: now.subtract(1, 'day').toISOString(),
-      completedAt: null,
-    },
-    {
-      id: 'task_demo_2',
-      title: '完成本周复盘草稿',
-      deadline: now.add(1, 'day').hour(18).minute(0).second(0).toISOString(),
-      completed: false,
-      createdAt: now.subtract(2, 'day').toISOString(),
-      completedAt: null,
-    },
-    {
-      id: 'task_demo_3',
-      title: '查看逾期任务的显示效果',
-      deadline: now.subtract(3, 'hour').toISOString(),
-      completed: false,
-      createdAt: now.subtract(1, 'day').toISOString(),
-      completedAt: null,
-    },
-    {
-      id: 'task_demo_4',
-      title: '已完成任务示例',
-      deadline: now.startOf('day').add(10, 'hour').toISOString(),
-      completed: true,
-      createdAt: now.subtract(2, 'day').toISOString(),
-      completedAt: now.subtract(30, 'minute').toISOString(),
-    },
-    {
-      id: 'task_demo_5',
-      title: '安排周末学习时间',
-      deadline: now
-        .startOf('isoWeek')
-        .add(5, 'day')
-        .hour(14)
-        .minute(0)
-        .second(0)
-        .toISOString(),
-      completed: false,
-      createdAt: now.subtract(3, 'day').toISOString(),
-      completedAt: null,
-    },
-  ]);
 }
 
 export function sortTasksByDeadline(tasks: TaskItem[]): TaskItem[] {

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { EmptyState } from '../components/common/EmptyState';
 import { PageHeader } from '../components/common/PageHeader';
@@ -13,7 +14,7 @@ interface WeekPageProps {
 }
 
 export function WeekPage({ tasksApi }: WeekPageProps) {
-  const { tasks, addTask, updateTask, deleteTask, toggleTaskCompleted } = tasksApi;
+  const { tasks, updateTask, deleteTask, toggleTaskCompleted } = tasksApi;
   const [filter, setFilter] = useState<TaskFilterValue>('all');
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
 
@@ -28,32 +29,51 @@ export function WeekPage({ tasksApi }: WeekPageProps) {
     if (editingTask) {
       updateTask(editingTask.id, input);
       setEditingTask(null);
-      return;
+    }
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    if (editingTask?.id === taskId) {
+      setEditingTask(null);
     }
 
-    addTask(input);
+    deleteTask(taskId);
   };
 
   return (
     <div className="page-stack">
       <PageHeader
         title="本周视图"
-        description="这里先按日期分组展示本周任务，让页面结构和后续分组逻辑先确定下来。"
+        description="这里按日期分组展示本周任务，帮助你确认本周安排和统计页中的数据是否一致。"
       />
 
       <section className="two-column-grid">
         <div className="panel">
           <h3 className="section-title">
-            {editingTask ? '编辑本周任务' : '新增任务'}
+            {editingTask ? '编辑本周任务' : '页面说明'}
           </h3>
-          <p className="section-description">
-            先复用任务表单，后续如果需要再把新增入口收敛到某一个页面。
-          </p>
-          <TaskForm
-            initialTask={editingTask}
-            onSubmit={handleSubmit}
-            onCancel={() => setEditingTask(null)}
-          />
+          {editingTask ? (
+            <>
+              <p className="section-description">
+                保存后，本周分组和其他页面会立刻按新的截止时间重新刷新。
+              </p>
+              <TaskForm
+                key={editingTask.id}
+                initialTask={editingTask}
+                onSubmit={handleSubmit}
+                onCancel={() => setEditingTask(null)}
+              />
+            </>
+          ) : (
+            <>
+              <p className="section-description">
+                本周页先专注做查看和整理。新增任务建议在任务总览完成，再回到这里检查分组是否正确。
+              </p>
+              <Link className="button button-primary inline-link-button" to="/">
+                去任务总览新增任务
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="panel">
@@ -66,7 +86,7 @@ export function WeekPage({ tasksApi }: WeekPageProps) {
       {groups.length === 0 ? (
         <EmptyState
           title="本周还没有任务"
-          description="可以先新增一条本周截止的任务，或者保留当前骨架继续开发。"
+          description="可以先去任务总览新增一条本周截止的任务，再回来看这里的分组展示。"
         />
       ) : (
         groups.map((group) => (
@@ -78,7 +98,7 @@ export function WeekPage({ tasksApi }: WeekPageProps) {
               emptyDescription="这一组数据暂时为空。"
               onToggleTaskCompleted={toggleTaskCompleted}
               onEditTask={setEditingTask}
-              onDeleteTask={deleteTask}
+              onDeleteTask={handleDeleteTask}
             />
           </section>
         ))

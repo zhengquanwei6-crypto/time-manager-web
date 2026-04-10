@@ -311,6 +311,17 @@ input {
   gap: 10px;
 }
 
+.task-check-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.task-checkbox {
+  width: 18px;
+  height: 18px;
+}
+
 .task-card-header {
   display: flex;
   justify-content: space-between;

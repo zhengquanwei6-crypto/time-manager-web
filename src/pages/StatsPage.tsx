@@ -14,7 +14,7 @@ export function StatsPage({ tasksApi }: StatsPageProps) {
     <div className="page-stack">
       <PageHeader
         title="统计页"
-        description="这里先使用 mock 任务和当前任务数据计算基础统计卡片，不引入复杂图表。"
+        description="这里直接基于当前任务数据计算结果，所以任务在其他页面的新增、编辑、删除和完成状态都会同步反映在这里。"
       />
 
       <section className="stats-grid">

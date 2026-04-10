@@ -32,7 +32,15 @@ export function TaskCard({
     <article className={`task-card ${task.completed ? 'task-card-completed' : ''}`}>
       <div className="task-card-main">
         <div className="task-card-header">
-          <h3 className="task-card-title">{task.title}</h3>
+          <label className="task-check-row">
+            <input
+              className="task-checkbox"
+              type="checkbox"
+              checked={task.completed}
+              onChange={() => onToggleTaskCompleted?.(task.id)}
+            />
+            <h3 className="task-card-title">{task.title}</h3>
+          </label>
           <span className={`status-badge ${isOverdue ? 'status-badge-danger' : ''}`}>
             {task.completed ? '已完成' : isOverdue ? '已逾期' : '进行中'}
           </span>
@@ -42,13 +50,6 @@ export function TaskCard({
       </div>
 
       <div className="task-card-actions">
-        <button
-          className="button button-secondary"
-          type="button"
-          onClick={() => onToggleTaskCompleted?.(task.id)}
-        >
-          {task.completed ? '恢复未完成' : '标记完成'}
-        </button>
         <button
           className="button button-secondary"
           type="button"

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { formatInputDateTime, toIsoFromInput } from '../../utils/date';
 import type { TaskFormInput, TaskItem } from '../../types/task';
 
@@ -18,12 +18,6 @@ export function TaskForm({
     formatInputDateTime(initialTask?.deadline ?? null),
   );
   const [errorMessage, setErrorMessage] = useState('');
-
-  useEffect(() => {
-    setTitle(initialTask?.title ?? '');
-    setDeadlineInput(formatInputDateTime(initialTask?.deadline ?? null));
-    setErrorMessage('');
-  }, [initialTask]);
 
   const isEditing = Boolean(initialTask);
 
@@ -59,6 +53,7 @@ export function TaskForm({
           className="form-input"
           type="text"
           placeholder="例如：完成今天的日报"
+          required
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />

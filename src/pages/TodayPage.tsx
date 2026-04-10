@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { PageHeader } from '../components/common/PageHeader';
 import { TaskFilters } from '../components/task/TaskFilters';
@@ -12,7 +13,7 @@ interface TodayPageProps {
 }
 
 export function TodayPage({ tasksApi }: TodayPageProps) {
-  const { tasks, addTask, updateTask, deleteTask, toggleTaskCompleted } = tasksApi;
+  const { tasks, updateTask, deleteTask, toggleTaskCompleted } = tasksApi;
   const [filter, setFilter] = useState<TaskFilterValue>('all');
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
 
@@ -22,32 +23,51 @@ export function TodayPage({ tasksApi }: TodayPageProps) {
     if (editingTask) {
       updateTask(editingTask.id, input);
       setEditingTask(null);
-      return;
+    }
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    if (editingTask?.id === taskId) {
+      setEditingTask(null);
     }
 
-    addTask(input);
+    deleteTask(taskId);
   };
 
   return (
     <div className="page-stack">
       <PageHeader
         title="今日视图"
-        description="这里先展示今天到期的任务，并把逾期未完成任务也放到今天页面中。"
+        description="这里专注查看今天到期和已逾期的任务，保证今日页和统计页看到的是同一份任务数据。"
       />
 
       <section className="two-column-grid">
         <div className="panel">
           <h3 className="section-title">
-            {editingTask ? '编辑今日任务' : '新增任务'}
+            {editingTask ? '编辑今日任务' : '页面说明'}
           </h3>
-          <p className="section-description">
-            当前先保留最基础的表单结构，后续可以继续补充校验和交互细节。
-          </p>
-          <TaskForm
-            initialTask={editingTask}
-            onSubmit={handleSubmit}
-            onCancel={() => setEditingTask(null)}
-          />
+          {editingTask ? (
+            <>
+              <p className="section-description">
+                在这里修改任务后，今日列表、任务总览和统计页都会立即同步更新。
+              </p>
+              <TaskForm
+                key={editingTask.id}
+                initialTask={editingTask}
+                onSubmit={handleSubmit}
+                onCancel={() => setEditingTask(null)}
+              />
+            </>
+          ) : (
+            <>
+              <p className="section-description">
+                今日页主要用于查看和处理今天相关的任务。新增任务建议在任务总览完成，这样更不容易出现“刚新增但当前页看不到”的误会。
+              </p>
+              <Link className="button button-primary inline-link-button" to="/">
+                去任务总览新增任务
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="panel">
@@ -64,10 +84,10 @@ export function TodayPage({ tasksApi }: TodayPageProps) {
         <TaskList
           tasks={todayTasks}
           emptyTitle="今天还没有任务"
-          emptyDescription="可以先新增一个今天到期的任务，或者查看 mock 数据的展示效果。"
+          emptyDescription="如果你刚新增了任务，请确认截止时间是否在今天，或者先去任务总览查看完整任务列表。"
           onToggleTaskCompleted={toggleTaskCompleted}
           onEditTask={setEditingTask}
-          onDeleteTask={deleteTask}
+          onDeleteTask={handleDeleteTask}
         />
       </section>
     </div>

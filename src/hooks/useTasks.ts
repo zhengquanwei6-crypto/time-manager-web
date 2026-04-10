@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import type { TaskFormInput, TaskItem } from '../types/task';
 import { loadTasksFromStorage, saveTasksToStorage } from '../utils/storage';
 import {
-  createMockTasks,
   createTask,
   sortTasksByDeadline,
   updateTaskItem,
@@ -15,7 +14,6 @@ export interface UseTasksResult {
   updateTask: (taskId: string, input: TaskFormInput) => void;
   deleteTask: (taskId: string) => void;
   toggleTaskCompleted: (taskId: string) => void;
-  resetTasks: () => void;
 }
 
 export function useTasks(): UseTasksResult {
@@ -26,7 +24,7 @@ export function useTasks(): UseTasksResult {
       return sortTasksByDeadline(storedTasks);
     }
 
-    return createMockTasks();
+    return [];
   });
 
   useEffect(() => {
@@ -75,16 +73,11 @@ export function useTasks(): UseTasksResult {
     );
   };
 
-  const resetTasks = () => {
-    setTasks(createMockTasks());
-  };
-
   return {
     tasks,
     addTask,
     updateTask,
     deleteTask,
     toggleTaskCompleted,
-    resetTasks,
   };
 }

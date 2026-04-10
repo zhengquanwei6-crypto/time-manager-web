@@ -14,7 +14,7 @@ export function PomodoroPage({ pomodoroApi }: PomodoroPageProps) {
     <div className="page-stack">
       <PageHeader
         title="番茄钟页"
-        description="这里先提供一个可运行的基础倒计时界面，后续再考虑任务绑定、提示音和历史记录。"
+        description="这里提供可用的基础倒计时界面，并支持本地保存与刷新后恢复。"
       />
 
       <section className="two-column-grid">
@@ -44,7 +44,7 @@ export function PomodoroPage({ pomodoroApi }: PomodoroPageProps) {
             </div>
             <div className="info-row">
               <span>当前阶段</span>
-              <strong>基础倒计时骨架</strong>
+              <strong>可用的 MVP 版本</strong>
             </div>
           </div>
         </div>

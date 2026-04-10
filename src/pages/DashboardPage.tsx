@@ -8,8 +8,8 @@ import type { UsePomodoroResult } from '../hooks/usePomodoro';
 import type { UseTasksResult } from '../hooks/useTasks';
 import type { TaskFormInput, TaskItem } from '../types/task';
 import { formatTime } from '../utils/date';
+import { formatPomodoroStatus } from '../utils/pomodoro';
 import { calculateTaskStats } from '../utils/stats';
-import { getRecentTasks } from '../utils/task';
 
 interface DashboardPageProps {
   tasksApi: UseTasksResult;
@@ -26,11 +26,9 @@ export function DashboardPage({
     updateTask,
     deleteTask,
     toggleTaskCompleted,
-    resetTasks,
   } = tasksApi;
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
   const stats = calculateTaskStats(tasks);
-  const recentTasks = getRecentTasks(tasks, 5);
 
   const handleSubmit = (input: TaskFormInput) => {
     if (editingTask) {
@@ -42,11 +40,19 @@ export function DashboardPage({
     addTask(input);
   };
 
+  const handleDeleteTask = (taskId: string) => {
+    if (editingTask?.id === taskId) {
+      setEditingTask(null);
+    }
+
+    deleteTask(taskId);
+  };
+
   return (
     <div className="page-stack">
       <PageHeader
-        title="Dashboard"
-        description="这里先展示项目首页的基础结构：摘要卡片、任务表单、最近任务和番茄钟入口。"
+        title="任务总览"
+        description="这里作为第一条可用闭环的主入口：新增任务、查看列表、切换完成状态，都先在这个页面完成。"
       />
 
       <section className="stats-grid">
@@ -70,25 +76,15 @@ export function DashboardPage({
 
       <section className="two-column-grid">
         <div className="panel">
-          <div className="section-header">
-            <div>
-              <h3 className="section-title">
-                {editingTask ? '编辑任务' : '快速新增任务'}
-              </h3>
-              <p className="section-description">
-                第一版先保留最基础的任务表单，只输入标题和截止时间。
-              </p>
-            </div>
-            <button
-              className="button button-secondary"
-              type="button"
-              onClick={resetTasks}
-            >
-              恢复 mock 数据
-            </button>
-          </div>
+          <h3 className="section-title">
+            {editingTask ? '编辑任务' : '新增任务'}
+          </h3>
+          <p className="section-description">
+            第一版先保留最基础的任务表单，只输入标题和截止时间。提交后，下面的任务列表会立即刷新。
+          </p>
 
           <TaskForm
+            key={editingTask?.id ?? 'dashboard-create-task'}
             initialTask={editingTask}
             onSubmit={handleSubmit}
             onCancel={() => setEditingTask(null)}
@@ -103,7 +99,7 @@ export function DashboardPage({
           <div className="info-list">
             <div className="info-row">
               <span>当前状态</span>
-              <strong>{pomodoroApi.pomodoro.status}</strong>
+              <strong>{formatPomodoroStatus(pomodoroApi.pomodoro.status)}</strong>
             </div>
             <div className="info-row">
               <span>剩余时间</span>
@@ -119,9 +115,9 @@ export function DashboardPage({
       <section className="panel">
         <div className="section-header">
           <div>
-            <h3 className="section-title">最近任务</h3>
+            <h3 className="section-title">任务列表</h3>
             <p className="section-description">
-              这里使用 mock 数据作为第一版骨架展示，也支持基础增删改和完成切换。
+              这里展示当前所有任务。你可以直接勾选完成，页面会立即更新，刷新浏览器后数据也会保留。
             </p>
           </div>
           <div className="section-link-group">
@@ -135,12 +131,12 @@ export function DashboardPage({
         </div>
 
         <TaskList
-          tasks={recentTasks}
+          tasks={tasks}
           emptyTitle="还没有任务"
-          emptyDescription="先新增一条任务，页面骨架就会开始展示真实内容。"
+          emptyDescription="先在上方新增一条任务，列表会立刻显示出来。"
           onToggleTaskCompleted={toggleTaskCompleted}
           onEditTask={setEditingTask}
-          onDeleteTask={deleteTask}
+          onDeleteTask={handleDeleteTask}
         />
       </section>
     </div>

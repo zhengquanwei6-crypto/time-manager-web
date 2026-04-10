@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import type { PomodoroStatus } from '../../types/pomodoro';
+import { formatPomodoroStatus } from '../../utils/pomodoro';
 
 interface AppLayoutProps {
   pendingTaskCount: number;
@@ -7,19 +8,12 @@ interface AppLayoutProps {
 }
 
 const navItems = [
-  { to: '/', label: 'Dashboard', end: true },
+  { to: '/', label: '任务总览', end: true },
   { to: '/today', label: '今日视图' },
   { to: '/week', label: '本周视图' },
   { to: '/pomodoro', label: '番茄钟' },
   { to: '/stats', label: '统计' },
 ];
-
-const statusTextMap: Record<PomodoroStatus, string> = {
-  idle: '未开始',
-  running: '进行中',
-  paused: '已暂停',
-  finished: '已结束',
-};
 
 export function AppLayout({
   pendingTaskCount,
@@ -30,9 +24,9 @@ export function AppLayout({
       <aside className="app-sidebar">
         <div className="brand-block">
           <p className="brand-kicker">时间管理 Web</p>
-          <h1 className="brand-title">第一版 MVP 骨架</h1>
+          <h1 className="brand-title">个人时间管理台</h1>
           <p className="brand-description">
-            先把任务、视图、番茄钟和统计页面跑起来，再逐步补充细节。
+            管理任务、查看今日和本周安排、使用番茄钟专注，并追踪完成情况。
           </p>
         </div>
 
@@ -59,7 +53,7 @@ export function AppLayout({
           <div className="summary-card">
             <span className="summary-label">番茄钟状态</span>
             <strong className="summary-value">
-              {statusTextMap[pomodoroStatus]}
+              {formatPomodoroStatus(pomodoroStatus)}
             </strong>
           </div>
         </div>
