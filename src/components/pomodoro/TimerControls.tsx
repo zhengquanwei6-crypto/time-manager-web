@@ -14,9 +14,9 @@ export function TimerControls({
   onReset,
 }: TimerControlsProps) {
   return (
-    <div className="button-row">
+    <div className="button-row timer-controls">
       <button
-        className="button button-primary"
+        className="button button-primary timer-button"
         type="button"
         onClick={onStart}
         disabled={status === 'running'}
@@ -24,14 +24,18 @@ export function TimerControls({
         开始
       </button>
       <button
-        className="button button-secondary"
+        className="button button-secondary timer-button"
         type="button"
         onClick={onPause}
         disabled={status !== 'running'}
       >
         暂停
       </button>
-      <button className="button button-secondary" type="button" onClick={onReset}>
+      <button
+        className="button button-secondary timer-button"
+        type="button"
+        onClick={onReset}
+      >
         重置
       </button>
     </div>

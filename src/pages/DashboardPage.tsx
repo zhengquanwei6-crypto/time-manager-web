@@ -10,6 +10,7 @@ import type { TaskFormInput, TaskItem } from '../types/task';
 import { formatTime } from '../utils/date';
 import { formatPomodoroStatus } from '../utils/pomodoro';
 import { calculateTaskStats } from '../utils/stats';
+import { getTodayTasks } from '../utils/task';
 
 interface DashboardPageProps {
   tasksApi: UseTasksResult;
@@ -29,6 +30,8 @@ export function DashboardPage({
   } = tasksApi;
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
   const stats = calculateTaskStats(tasks);
+  const todayTasks = getTodayTasks(tasks);
+  const todayActiveCount = todayTasks.filter((task) => !task.completed).length;
 
   const handleSubmit = (input: TaskFormInput) => {
     if (editingTask) {
@@ -55,7 +58,35 @@ export function DashboardPage({
         description="这里作为第一条可用闭环的主入口：新增任务、查看列表、切换完成状态，都先在这个页面完成。"
       />
 
-      <section className="stats-grid">
+      <section className="panel dashboard-overview">
+        <div className="section-header">
+          <div>
+            <h3 className="section-title">今日概览</h3>
+            <p className="section-description">
+              手机端会优先把这里放到前面，帮助你先看清今天要处理什么。
+            </p>
+          </div>
+          <Link className="text-link" to="/today">
+            查看今日任务
+          </Link>
+        </div>
+        <div className="overview-grid">
+          <div className="overview-item">
+            <span className="overview-label">今日相关任务</span>
+            <strong className="overview-value">{todayTasks.length}</strong>
+          </div>
+          <div className="overview-item">
+            <span className="overview-label">今日待处理</span>
+            <strong className="overview-value">{todayActiveCount}</strong>
+          </div>
+          <div className="overview-item">
+            <span className="overview-label">今日完成</span>
+            <strong className="overview-value">{stats.todayCompletedCount}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="stats-grid dashboard-stats">
         <StatCard label="总任务数" value={stats.totalCount} description="当前任务总数" />
         <StatCard
           label="已完成"
@@ -74,8 +105,8 @@ export function DashboardPage({
         />
       </section>
 
-      <section className="two-column-grid">
-        <div className="panel">
+      <section className="two-column-grid dashboard-main-grid">
+        <div className="panel dashboard-form-panel">
           <h3 className="section-title">
             {editingTask ? '编辑任务' : '新增任务'}
           </h3>
@@ -91,7 +122,7 @@ export function DashboardPage({
           />
         </div>
 
-        <div className="panel">
+        <div className="panel dashboard-pomodoro-panel">
           <h3 className="section-title">番茄钟概览</h3>
           <p className="section-description">
             这里先展示基础倒计时状态，完整操作在番茄钟页中进行。
@@ -112,10 +143,10 @@ export function DashboardPage({
         </div>
       </section>
 
-      <section className="panel">
+      <section className="panel dashboard-tasks-panel">
         <div className="section-header">
           <div>
-            <h3 className="section-title">任务列表</h3>
+            <h3 className="section-title">最近任务</h3>
             <p className="section-description">
               这里展示当前所有任务。你可以直接勾选完成，页面会立即更新，刷新浏览器后数据也会保留。
             </p>

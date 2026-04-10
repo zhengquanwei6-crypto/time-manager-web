@@ -74,8 +74,8 @@ export function TaskForm({
 
       {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
 
-      <div className="button-row">
-        <button className="button button-primary" type="submit">
+      <div className="button-row form-button-row">
+        <button className="button button-primary form-primary-button" type="submit">
           {isEditing ? '保存修改' : '新增任务'}
         </button>
         {isEditing && onCancel ? (

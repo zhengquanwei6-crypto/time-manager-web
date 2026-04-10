@@ -31,7 +31,7 @@ export function TaskCard({
   return (
     <article className={`task-card ${task.completed ? 'task-card-completed' : ''}`}>
       <div className="task-card-main">
-        <div className="task-card-header">
+        <div className="task-card-title-row">
           <label className="task-check-row">
             <input
               className="task-checkbox"
@@ -41,23 +41,36 @@ export function TaskCard({
             />
             <h3 className="task-card-title">{task.title}</h3>
           </label>
+        </div>
+
+        <div className="task-card-meta-row">
           <span className={`status-badge ${isOverdue ? 'status-badge-danger' : ''}`}>
             {task.completed ? '已完成' : isOverdue ? '已逾期' : '进行中'}
           </span>
+          <p className="task-card-meta">截止时间：{formatTaskDateTime(task.deadline)}</p>
         </div>
-
-        <p className="task-card-meta">截止时间：{formatTaskDateTime(task.deadline)}</p>
       </div>
 
       <div className="task-card-actions">
         <button
-          className="button button-secondary"
+          className="button button-primary task-action-button"
+          type="button"
+          onClick={() => onToggleTaskCompleted?.(task.id)}
+        >
+          {task.completed ? '恢复未完成' : '标记完成'}
+        </button>
+        <button
+          className="button button-secondary task-action-button"
           type="button"
           onClick={() => onEditTask?.(task)}
         >
           编辑
         </button>
-        <button className="button button-danger" type="button" onClick={handleDelete}>
+        <button
+          className="button button-danger task-action-button"
+          type="button"
+          onClick={handleDelete}
+        >
           删除
         </button>
       </div>
