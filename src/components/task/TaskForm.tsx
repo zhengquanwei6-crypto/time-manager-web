@@ -1,0 +1,98 @@
+import { useEffect, useState } from 'react';
+import { formatInputDateTime, toIsoFromInput } from '../../utils/date';
+import type { TaskFormInput, TaskItem } from '../../types/task';
+
+interface TaskFormProps {
+  initialTask?: TaskItem | null;
+  onSubmit: (input: TaskFormInput) => void;
+  onCancel?: () => void;
+}
+
+export function TaskForm({
+  initialTask = null,
+  onSubmit,
+  onCancel,
+}: TaskFormProps) {
+  const [title, setTitle] = useState(initialTask?.title ?? '');
+  const [deadlineInput, setDeadlineInput] = useState(
+    formatInputDateTime(initialTask?.deadline ?? null),
+  );
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    setTitle(initialTask?.title ?? '');
+    setDeadlineInput(formatInputDateTime(initialTask?.deadline ?? null));
+    setErrorMessage('');
+  }, [initialTask]);
+
+  const isEditing = Boolean(initialTask);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!title.trim()) {
+      setErrorMessage('任务名称不能为空');
+      return;
+    }
+
+    onSubmit({
+      title: title.trim(),
+      deadline: toIsoFromInput(deadlineInput),
+    });
+
+    if (!isEditing) {
+      setTitle('');
+      setDeadlineInput('');
+    }
+
+    setErrorMessage('');
+  };
+
+  return (
+    <form className="task-form" onSubmit={handleSubmit}>
+      <div className="form-group">
+        <label className="form-label" htmlFor="task-title">
+          任务名称
+        </label>
+        <input
+          id="task-title"
+          className="form-input"
+          type="text"
+          placeholder="例如：完成今天的日报"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+        />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label" htmlFor="task-deadline">
+          截止时间
+        </label>
+        <input
+          id="task-deadline"
+          className="form-input"
+          type="datetime-local"
+          value={deadlineInput}
+          onChange={(event) => setDeadlineInput(event.target.value)}
+        />
+      </div>
+
+      {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
+
+      <div className="button-row">
+        <button className="button button-primary" type="submit">
+          {isEditing ? '保存修改' : '新增任务'}
+        </button>
+        {isEditing && onCancel ? (
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={onCancel}
+          >
+            取消编辑
+          </button>
+        ) : null}
+      </div>
+    </form>
+  );
+}
