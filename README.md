@@ -105,23 +105,56 @@ src/
 
 ## 最简部署说明
 
-当前项目已经适合部署静态前端版本。
+当前项目已经适合部署到 **Vercel**。
 
-推荐方式：**Vercel**
+### Vercel 推荐配置
 
-1. 把仓库导入 Vercel
-2. Framework Preset 选择 `Vite`
-3. Build Command 使用 `npm run build`
-4. Output Directory 使用 `dist`
-5. 点击部署
+- Framework Preset：`Vite`
+- Install Command：`npm install`
+- Build Command：`npm run build`
+- Output Directory：`dist`
+- Node.js Version：使用平台默认版本即可
+- Environment Variables：当前版本不需要
 
-如果你使用的静态托管平台不自动处理单页应用路由，请额外配置：
+### 为什么需要额外配置路由
 
-```text
-所有路径回退到 /index.html
+当前项目使用的是 `React Router` 的 `BrowserRouter`。  
+这意味着首页 `/` 可以正常打开，但如果用户直接刷新 `/today`、`/week`、`/stats`、`/pomodoro` 这些前端路由，托管平台需要把请求回退到 `/index.html`，再交给前端路由处理。
+
+为了解决这个问题，项目根目录已经添加了 [vercel.json](./vercel.json)，其中配置了最小重写规则：
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
 ```
 
-原因是项目使用了 `React Router` 的浏览器路由模式，直接刷新 `/today`、`/week` 等页面时，需要由托管平台把请求回退到前端入口页面。
+### 最简部署步骤
+
+1. 在 Vercel 中导入当前 GitHub 仓库
+2. 确认 Framework Preset 为 `Vite`
+3. 确认 Build Command 为 `npm run build`
+4. 确认 Output Directory 为 `dist`
+5. 保持项目根目录为仓库根目录
+6. 点击 Deploy
+
+### 部署后检查
+
+部署完成后，建议至少手动验证这些地址：
+
+- `/`
+- `/today`
+- `/week`
+- `/pomodoro`
+- `/stats`
+
+重点检查直接刷新这些页面时是否还能正常打开。
 
 ## 当前状态
 
@@ -133,6 +166,7 @@ src/
 - 任务新增、编辑、删除、完成状态切换可用
 - 跨页面数据一致
 - 本地存储可恢复
+- 已补充 Vercel 的 SPA 路由回退配置
 
 ## 后续建议
 
