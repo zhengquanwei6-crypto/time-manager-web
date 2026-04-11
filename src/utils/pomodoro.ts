@@ -17,7 +17,12 @@ export function isPomodoroState(value: unknown): value is PomodoroState {
   }
 
   const maybePomodoro = value as PomodoroState;
-  const validStatus: PomodoroStatus[] = ['idle', 'running', 'paused', 'finished'];
+  const validStatus: PomodoroStatus[] = [
+    'idle',
+    'running',
+    'paused',
+    'finished',
+  ];
 
   return (
     typeof maybePomodoro.durationSeconds === 'number' &&

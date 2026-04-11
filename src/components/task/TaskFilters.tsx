@@ -7,7 +7,7 @@ interface TaskFiltersProps {
 
 const filterOptions: Array<{ label: string; value: TaskFilterValue }> = [
   { label: '全部', value: 'all' },
-  { label: '未完成', value: 'active' },
+  { label: '待处理', value: 'active' },
   { label: '已完成', value: 'completed' },
 ];
 
