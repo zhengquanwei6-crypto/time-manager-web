@@ -63,7 +63,7 @@ export function TodaySummarySidebar({
 }: TodaySummarySidebarProps) {
   return (
     <aside className="today-v2-sidebar" aria-label="今日摘要">
-      <section className="panel today-v2-summary-card">
+      <section className="panel today-v2-summary-card today-v2-summary-card-primary today-v2-reveal today-v2-reveal-delay-2">
         <div className="today-v2-summary-head">
           <div>
             <p className="today-v2-card-kicker">今日摘要</p>
@@ -86,6 +86,11 @@ export function TodaySummarySidebar({
           />
         </div>
 
+        <div className="today-v2-summary-caption">
+          <span>{completedCount} / {totalCount} 已完成</span>
+          <span>{activeCount > 0 ? `还剩 ${activeCount} 条待处理` : '今天的任务已经清空'}</span>
+        </div>
+
         <div className="today-v2-summary-stats">
           <div>
             <span>总数</span>
@@ -102,11 +107,19 @@ export function TodaySummarySidebar({
         </div>
       </section>
 
-      <section className="panel today-v2-summary-card">
+      <section className="panel today-v2-summary-card today-v2-summary-card-focus today-v2-reveal today-v2-reveal-delay-3">
         <p className="today-v2-card-kicker">今日核心任务</p>
         <h2 className="section-title">
           {coreTask ? coreTask.title : '先新增一条高优先级任务'}
         </h2>
+        <div className="today-v2-focus-strip">
+          <span className="today-v2-focus-pill">
+            {coreTask ? '建议先处理' : '等待安排'}
+          </span>
+          <span className="today-v2-focus-pill today-v2-focus-pill-soft">
+            {coreTask ? '减少切换成本' : '先把最重要的一件事写下来'}
+          </span>
+        </div>
         <p className="section-description">
           {coreTask
             ? '这是系统根据优先级、逾期情况和截止时间推荐的第一件事。'
@@ -114,7 +127,7 @@ export function TodaySummarySidebar({
         </p>
       </section>
 
-      <section className="panel today-v2-summary-card">
+      <section className="panel today-v2-summary-card today-v2-summary-card-sort today-v2-reveal today-v2-reveal-delay-4">
         <div className="today-v2-control-head">
           <div>
             <p className="today-v2-card-kicker">智能排序</p>
@@ -140,9 +153,12 @@ export function TodaySummarySidebar({
             </button>
           ))}
         </div>
+        <p className="today-v2-summary-helper">
+          推荐排序更适合开工前快速决定“先做什么”。
+        </p>
       </section>
 
-      <section className="panel today-v2-summary-card">
+      <section className="panel today-v2-summary-card today-v2-summary-card-drop today-v2-reveal today-v2-reveal-delay-4">
         <p className="today-v2-card-kicker">拖拽调整优先级</p>
         <h2 className="section-title">把任务拖到目标优先级</h2>
         <p className="section-description">
@@ -174,6 +190,9 @@ export function TodaySummarySidebar({
             </button>
           ))}
         </div>
+        <p className="today-v2-summary-helper">
+          想快速整理节奏时，把任务直接拖到对应区域会更顺手。
+        </p>
       </section>
     </aside>
   );

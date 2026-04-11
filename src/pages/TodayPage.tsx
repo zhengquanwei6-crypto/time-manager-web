@@ -402,8 +402,16 @@ export function TodayPage() {
         {liveMessage}
       </div>
 
-      <section className="panel today-v2-core">
+      <section className="panel today-v2-core today-v2-reveal today-v2-reveal-delay-1">
         <div className="today-v2-core-copy">
+          <div className="today-v2-core-topline">
+            <span className="today-v2-core-pill today-v2-core-pill-primary">
+              今日工作台
+            </span>
+            <span className="today-v2-core-pill">
+              {sortValue === 'recommended' ? '推荐排序已开启' : '正在使用自定义排序'}
+            </span>
+          </div>
           <p className="today-v2-kicker">今日核心任务</p>
           <h1 className="today-v2-title">
             {coreTask ? coreTask.title : '先安排今天最重要的事'}
@@ -413,6 +421,20 @@ export function TodayPage() {
               ? `建议先处理这条 ${TASK_PRIORITY_LABELS[coreTask.priority]} 优先级任务。它会直接影响今天的推进节奏。`
               : '今天还没有任务。先用下面的表单记下一条最重要的任务，再开始推进。'}
           </p>
+          <div className="today-v2-core-highlights">
+            <div className="today-v2-core-highlight">
+              <span>高优先级</span>
+              <strong>{priorityCounts.high}</strong>
+            </div>
+            <div className="today-v2-core-highlight">
+              <span>待处理任务</span>
+              <strong>{activeTasks.length}</strong>
+            </div>
+            <div className="today-v2-core-highlight">
+              <span>已完成</span>
+              <strong>{completedTasks.length}</strong>
+            </div>
+          </div>
           <div className="today-v2-core-actions">
             <button
               className="button button-primary"
@@ -432,25 +454,48 @@ export function TodayPage() {
           </div>
         </div>
 
-        <div className="today-v2-core-metrics">
-          <div className="today-v2-core-metric">
-            <span>今日任务</span>
-            <strong>{todayTasks.length}</strong>
+        <div className="today-v2-core-stage">
+          <div className="today-v2-core-progress-card">
+            <p className="today-v2-core-progress-label">今日推进节奏</p>
+            <div
+              className="today-v2-core-progress-disc"
+              style={{
+                background: `conic-gradient(#60a5fa 0 ${completionRate}%, rgba(191, 219, 254, 0.24) ${completionRate}% 100%)`,
+              }}
+              aria-hidden="true"
+            >
+              <div className="today-v2-core-progress-disc-inner">
+                <strong>{completionRate}%</strong>
+                <span>完成率</span>
+              </div>
+            </div>
+            <p className="today-v2-core-progress-note">
+              {completedTasks.length > 0
+                ? `今天已经完成 ${completedTasks.length} 条任务`
+                : '先完成一条任务，建立今天的推进节奏'}
+            </p>
           </div>
-          <div className="today-v2-core-metric">
-            <span>待处理</span>
-            <strong>{activeTasks.length}</strong>
-          </div>
-          <div className="today-v2-core-metric">
-            <span>完成率</span>
-            <strong>{completionRate}%</strong>
+
+          <div className="today-v2-core-metrics">
+            <div className="today-v2-core-metric">
+              <span>今日任务</span>
+              <strong>{todayTasks.length}</strong>
+            </div>
+            <div className="today-v2-core-metric">
+              <span>待处理</span>
+              <strong>{activeTasks.length}</strong>
+            </div>
+            <div className="today-v2-core-metric">
+              <span>完成率</span>
+              <strong>{completionRate}%</strong>
+            </div>
           </div>
         </div>
       </section>
 
       <section className="today-v2-layout">
         <div className="today-v2-main">
-          <section className="panel today-v2-composer">
+          <section className="panel today-v2-composer today-v2-panel-elevated today-v2-reveal today-v2-reveal-delay-2">
             <div className="today-v2-section-head">
               <div>
                 <p className="today-v2-kicker">
@@ -470,7 +515,7 @@ export function TodayPage() {
             />
           </section>
 
-          <section className="panel today-v2-toolbar-card">
+          <section className="panel today-v2-toolbar-card today-v2-panel-muted today-v2-reveal today-v2-reveal-delay-3">
             <div className="today-v2-section-head">
               <div>
                 <p className="today-v2-kicker">筛选与排序</p>
@@ -521,7 +566,10 @@ export function TodayPage() {
           </section>
 
           {selectedVisibleTaskIds.length ? (
-            <section className="panel today-v2-batch-bar" aria-label="批量操作">
+            <section
+              className="panel today-v2-batch-bar today-v2-panel-accent today-v2-reveal today-v2-reveal-delay-4"
+              aria-label="批量操作"
+            >
               <div>
                 <strong>已选择 {selectedVisibleTaskIds.length} 条任务</strong>
                 <p>可以一次性完成、恢复、删除，或者直接批量修改优先级。</p>
@@ -570,7 +618,7 @@ export function TodayPage() {
             </section>
           ) : null}
 
-          <section className="panel today-v2-list-card">
+          <section className="panel today-v2-list-card today-v2-panel-elevated today-v2-reveal today-v2-reveal-delay-4">
             {deferredTasks.length === 0 ? (
               <EmptyState
                 title="当前筛选下没有任务"

@@ -70,6 +70,12 @@ function TodayTaskCardComponent({
     <article
       className={`today-v2-task-card ${
         task.completed ? 'today-v2-task-card-completed' : ''
+      } ${selected ? 'today-v2-task-card-selected' : ''} ${
+        task.priority === 'high'
+          ? 'today-v2-task-card-high'
+          : task.priority === 'medium'
+            ? 'today-v2-task-card-medium'
+            : 'today-v2-task-card-low'
       } ${isNew ? 'today-v2-task-card-added' : ''} ${
         isCompleting ? 'today-v2-task-card-completing' : ''
       } ${isDragging ? 'today-v2-task-card-dragging' : ''}`}
