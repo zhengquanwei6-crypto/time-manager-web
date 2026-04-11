@@ -1,30 +1,33 @@
 import dayjs from 'dayjs';
 import { memo } from 'react';
-import type { TaskItem } from '../../types/task';
+import type { TaskItem, TaskPriority } from '../../types/task';
+import { TASK_PRIORITY_LABELS, TASK_PRIORITY_OPTIONS } from '../../utils/task';
 
 interface TodayTaskCardProps {
   task: TaskItem;
   selected: boolean;
+  isNew: boolean;
+  isCompleting: boolean;
+  isDragging: boolean;
   onSelectChange: (taskId: string, selected: boolean) => void;
   onToggleTaskCompleted: (taskId: string) => void;
   onEditTask: (task: TaskItem) => void;
   onDeleteTask: (task: TaskItem) => void;
+  onPriorityChange: (taskId: string, priority: TaskPriority) => void;
+  onDragStart: (taskId: string) => void;
+  onDragEnd: () => void;
 }
 
-function getTaskTone(task: TaskItem) {
+function getStatusLabel(task: TaskItem) {
   if (task.completed) {
-    return { label: '已完成', className: 'today-task-tone-success' };
+    return '已完成';
   }
 
   if (task.deadline && dayjs(task.deadline).isBefore(dayjs())) {
-    return { label: '逾期优先', className: 'today-task-tone-danger' };
+    return '已逾期';
   }
 
-  if (task.deadline && dayjs(task.deadline).diff(dayjs(), 'hour') <= 3) {
-    return { label: '马上处理', className: 'today-task-tone-warning' };
-  }
-
-  return { label: '今天安排', className: 'today-task-tone-primary' };
+  return '待处理';
 }
 
 function getDeadlineLabel(task: TaskItem) {
@@ -38,90 +41,131 @@ function getDeadlineLabel(task: TaskItem) {
     return '时间格式错误';
   }
 
-  const baseLabel = deadline.isSame(dayjs(), 'day')
+  const base = deadline.isSame(dayjs(), 'day')
     ? `今天 ${deadline.format('HH:mm')}`
     : deadline.format('MM-DD HH:mm');
 
   if (task.completed) {
-    return baseLabel;
+    return base;
   }
 
-  const diffMinutes = deadline.diff(dayjs(), 'minute');
-
-  if (diffMinutes < 0) {
-    return `${baseLabel} · 已逾期 ${Math.abs(diffMinutes)} 分钟`;
-  }
-
-  if (diffMinutes < 60) {
-    return `${baseLabel} · ${diffMinutes} 分钟后到期`;
-  }
-
-  const diffHours = Math.ceil(diffMinutes / 60);
-
-  return `${baseLabel} · ${diffHours} 小时后到期`;
+  return `${base} · ${deadline.fromNow()}`;
 }
 
 function TodayTaskCardComponent({
   task,
   selected,
+  isNew,
+  isCompleting,
+  isDragging,
   onSelectChange,
   onToggleTaskCompleted,
   onEditTask,
   onDeleteTask,
+  onPriorityChange,
+  onDragStart,
+  onDragEnd,
 }: TodayTaskCardProps) {
-  const tone = getTaskTone(task);
-
   return (
     <article
-      className={`today-task-card ${
-        task.completed ? 'today-task-card-completed' : ''
-      }`}
+      className={`today-v2-task-card ${
+        task.completed ? 'today-v2-task-card-completed' : ''
+      } ${isNew ? 'today-v2-task-card-added' : ''} ${
+        isCompleting ? 'today-v2-task-card-completing' : ''
+      } ${isDragging ? 'today-v2-task-card-dragging' : ''}`}
       role="listitem"
+      draggable
+      aria-label={`任务 ${task.title}`}
+      aria-grabbed={isDragging}
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', task.id);
+        onDragStart(task.id);
+      }}
+      onDragEnd={onDragEnd}
     >
-      <div className="today-task-card-header">
-        <label className="today-task-select">
+      <div className="today-v2-task-main">
+        <label className="today-v2-select-wrap">
           <input
-            className="today-select-checkbox"
+            className="today-v2-select-checkbox"
             type="checkbox"
             checked={selected}
             aria-label={`选择任务 ${task.title}`}
             onChange={(event) => onSelectChange(task.id, event.target.checked)}
           />
-          <span className="today-task-select-label">多选</span>
+          <span>多选</span>
         </label>
 
-        <div className="today-task-heading">
-          <div className="today-task-title-row">
-            <h3 className="today-task-title">{task.title}</h3>
-            <span className={`today-task-tone ${tone.className}`}>
-              {tone.label}
-            </span>
+        <div className="today-v2-task-content">
+          <div className="today-v2-task-heading">
+            <h3 className="today-v2-task-title">{task.title}</h3>
+            <div className="today-v2-task-tags">
+              <span
+                className={`today-v2-priority-badge today-v2-priority-badge-${task.priority}`}
+              >
+                {TASK_PRIORITY_LABELS[task.priority]}优先级
+              </span>
+              <span
+                className={`today-v2-status-badge ${
+                  task.completed
+                    ? 'today-v2-status-success'
+                    : getStatusLabel(task) === '已逾期'
+                      ? 'today-v2-status-danger'
+                      : 'today-v2-status-neutral'
+                }`}
+              >
+                {getStatusLabel(task)}
+              </span>
+            </div>
           </div>
-          <p className="today-task-meta">{getDeadlineLabel(task)}</p>
+
+          <p className="today-v2-task-meta">{getDeadlineLabel(task)}</p>
+
+          <div
+            className="today-v2-priority-toggle"
+            role="group"
+            aria-label={`调整 ${task.title} 的优先级`}
+          >
+            {TASK_PRIORITY_OPTIONS.map((priorityOption) => (
+              <button
+                key={priorityOption}
+                className={`today-v2-mini-priority ${
+                  task.priority === priorityOption
+                    ? `today-v2-mini-priority-active today-v2-mini-priority-${priorityOption}`
+                    : ''
+                }`}
+                type="button"
+                aria-pressed={task.priority === priorityOption}
+                onClick={() => onPriorityChange(task.id, priorityOption)}
+              >
+                {TASK_PRIORITY_LABELS[priorityOption]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="today-task-actions">
+      <div className="today-v2-task-actions">
         <button
-          className="button button-primary today-task-action"
+          className="button button-primary today-v2-task-action"
           type="button"
           onClick={() => onToggleTaskCompleted(task.id)}
         >
-          {task.completed ? '继续处理' : '做完了'}
+          {task.completed ? '恢复待处理' : '完成任务'}
         </button>
         <button
-          className="button button-secondary today-task-action"
+          className="button button-secondary today-v2-task-action"
           type="button"
           onClick={() => onEditTask(task)}
         >
-          修改
+          编辑
         </button>
         <button
-          className="button button-danger today-task-action"
+          className="button button-danger today-v2-task-action"
           type="button"
           onClick={() => onDeleteTask(task)}
         >
-          移除
+          删除
         </button>
       </div>
     </article>

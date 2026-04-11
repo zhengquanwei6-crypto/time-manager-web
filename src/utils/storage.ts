@@ -1,7 +1,7 @@
 import type { PomodoroState } from '../types/pomodoro';
 import type { TaskItem } from '../types/task';
 import { isPomodoroState } from './pomodoro';
-import { isTaskItem } from './task';
+import { normalizeTaskItem } from './task';
 
 export const TASKS_STORAGE_KEY = 'time-manager.tasks';
 export const POMODORO_STORAGE_KEY = 'time-manager.pomodoro';
@@ -44,7 +44,9 @@ export function loadTasksFromStorage(): TaskItem[] | null {
     return null;
   }
 
-  const validTasks = tasks.filter((task) => isTaskItem(task));
+  const validTasks = tasks
+    .map((task) => normalizeTaskItem(task))
+    .filter((task): task is TaskItem => task !== null);
 
   return validTasks;
 }

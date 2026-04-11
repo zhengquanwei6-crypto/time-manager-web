@@ -1,198 +1,230 @@
-import dayjs from 'dayjs';
-import type { CSSProperties, ReactNode } from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  startTransition,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Link } from 'react-router-dom';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { EmptyState } from '../components/common/EmptyState';
-import { TodayFilterTabs } from '../components/today/TodayFilterTabs';
 import { TodayQuickAddForm } from '../components/today/TodayQuickAddForm';
-import { TodayTaskSection } from '../components/today/TodayTaskSection';
-import { usePomodoroContext } from '../contexts/PomodoroContext';
+import { TodaySummarySidebar } from '../components/today/TodaySummarySidebar';
+import { TodayTaskCard } from '../components/today/TodayTaskCard';
+import { VirtualTaskList } from '../components/today/VirtualTaskList';
 import { useTasksContext } from '../contexts/TasksContext';
 import { useToast } from '../contexts/ToastContext';
-import type { TaskFilterValue, TaskFormInput, TaskItem } from '../types/task';
-import { formatTime, isTaskDateOverdue } from '../utils/date';
-import { formatPomodoroStatus } from '../utils/pomodoro';
-import { getTodayTasks } from '../utils/task';
-
-type TodayModuleKey = 'focus' | 'composer' | 'pomodoro';
+import type {
+  TaskFilterValue,
+  TaskFormInput,
+  TaskItem,
+  TaskPriority,
+  TaskPriorityFilterValue,
+  TaskSortValue,
+} from '../types/task';
+import {
+  filterTasksByPriority,
+  filterTasksByStatus,
+  getCoreTodayTask,
+  getTodayTasks,
+  sortTasksForToday,
+  TASK_PRIORITY_LABELS,
+  TASK_PRIORITY_OPTIONS,
+} from '../utils/task';
 
 interface PendingDeleteState {
-  type: 'single' | 'batch';
-  task?: TaskItem;
   taskIds: string[];
-}
-
-const TODAY_LAYOUT_STORAGE_KEY = 'time-manager.today.layout';
-const defaultModuleOrder: TodayModuleKey[] = ['focus', 'composer', 'pomodoro'];
-
-function isValidModuleOrder(value: unknown): value is TodayModuleKey[] {
-  if (!Array.isArray(value) || value.length !== defaultModuleOrder.length) {
-    return false;
-  }
-
-  return defaultModuleOrder.every((key) => value.includes(key));
-}
-
-function loadModuleOrder(): TodayModuleKey[] {
-  if (typeof window === 'undefined') {
-    return defaultModuleOrder;
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(TODAY_LAYOUT_STORAGE_KEY);
-
-    if (!rawValue) {
-      return defaultModuleOrder;
-    }
-
-    const parsed = JSON.parse(rawValue) as unknown;
-
-    return isValidModuleOrder(parsed) ? parsed : defaultModuleOrder;
-  } catch {
-    return defaultModuleOrder;
-  }
-}
-
-function normalizeTodayInput(input: TaskFormInput): TaskFormInput {
-  return {
-    title: input.title.trim(),
-    deadline: input.deadline ?? dayjs().endOf('day').toISOString(),
-  };
+  title: string;
 }
 
 function isTaskStillInToday(task: TaskItem) {
   return Boolean(getTodayTasks([task]).length);
 }
 
-function moveItem<T>(items: T[], fromIndex: number, toIndex: number) {
-  const nextItems = [...items];
-  const [movedItem] = nextItems.splice(fromIndex, 1);
-  nextItems.splice(toIndex, 0, movedItem);
-  return nextItems;
+function getPriorityDescription(priority: TaskPriority) {
+  if (priority === 'high') {
+    return '今天最先处理';
+  }
+
+  if (priority === 'medium') {
+    return '今天正常推进';
+  }
+
+  return '可以稍后处理';
 }
 
 export function TodayPage() {
-  const { tasks, addTask, updateTask, deleteTask, toggleTaskCompleted } =
-    useTasksContext();
-  const pomodoroApi = usePomodoroContext();
+  const {
+    tasks,
+    addTask,
+    updateTask,
+    updateTaskPriority,
+    deleteTask,
+    toggleTaskCompleted,
+  } = useTasksContext();
   const { showToast } = useToast();
 
-  const [filter, setFilter] = useState<TaskFilterValue>('all');
-  const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
+  const [statusFilter, setStatusFilter] = useState<TaskFilterValue>('all');
+  const [priorityFilter, setPriorityFilter] =
+    useState<TaskPriorityFilterValue>('all');
+  const [sortValue, setSortValue] = useState<TaskSortValue>('recommended');
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
-  const [isCompletedCollapsed, setIsCompletedCollapsed] = useState(true);
   const [pendingDelete, setPendingDelete] = useState<PendingDeleteState | null>(
     null,
   );
-  const [moduleOrder, setModuleOrder] = useState<TodayModuleKey[]>(loadModuleOrder);
-  const [draggingModule, setDraggingModule] = useState<TodayModuleKey | null>(null);
+  const [recentlyAddedTaskId, setRecentlyAddedTaskId] = useState<string | null>(
+    null,
+  );
+  const [recentlyCompletedTaskId, setRecentlyCompletedTaskId] = useState<
+    string | null
+  >(null);
+  const [draggingTaskId, setDraggingTaskId] = useState<string | null>(null);
+  const [activeDropPriority, setActiveDropPriority] =
+    useState<TaskPriority | null>(null);
+  const [liveMessage, setLiveMessage] = useState('');
 
-  const composerRef = useRef<HTMLElement | null>(null);
-  const taskBoardRef = useRef<HTMLElement | null>(null);
+  const listHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
   const todayTasks = useMemo(() => getTodayTasks(tasks), [tasks]);
-
-  const overdueTasks = useMemo(
+  const activeEditingTask = useMemo(
     () =>
-      todayTasks.filter((task) => isTaskDateOverdue(task.deadline, task.completed)),
-    [todayTasks],
+      editingTaskId ? tasks.find((task) => task.id === editingTaskId) ?? null : null,
+    [editingTaskId, tasks],
   );
+
+  const filteredTasks = useMemo(() => {
+    const statusFilteredTasks = filterTasksByStatus(todayTasks, statusFilter);
+    const priorityFilteredTasks = filterTasksByPriority(
+      statusFilteredTasks,
+      priorityFilter,
+    );
+
+    return sortTasksForToday(priorityFilteredTasks, sortValue);
+  }, [priorityFilter, sortValue, statusFilter, todayTasks]);
+
+  const deferredTasks = useDeferredValue(filteredTasks);
+
   const activeTasks = useMemo(
-    () =>
-      todayTasks.filter(
-        (task) => !task.completed && !isTaskDateOverdue(task.deadline, task.completed),
-      ),
+    () => todayTasks.filter((task) => !task.completed),
     [todayTasks],
   );
   const completedTasks = useMemo(
     () => todayTasks.filter((task) => task.completed),
     [todayTasks],
   );
-
-  const focusTask = overdueTasks[0] ?? activeTasks[0] ?? null;
   const completionRate = todayTasks.length
     ? Math.round((completedTasks.length / todayTasks.length) * 100)
     : 0;
-
-  const filterCounts = useMemo(
+  const coreTask = useMemo(() => getCoreTodayTask(todayTasks), [todayTasks]);
+  const priorityCounts = useMemo(
     () => ({
-      all: todayTasks.length,
-      active: overdueTasks.length + activeTasks.length,
-      completed: completedTasks.length,
+      high: activeTasks.filter((task) => task.priority === 'high').length,
+      medium: activeTasks.filter((task) => task.priority === 'medium').length,
+      low: activeTasks.filter((task) => task.priority === 'low').length,
     }),
-    [activeTasks.length, completedTasks.length, overdueTasks.length, todayTasks.length],
+    [activeTasks],
   );
 
-  useEffect(() => {
-    window.localStorage.setItem(
-      TODAY_LAYOUT_STORAGE_KEY,
-      JSON.stringify(moduleOrder),
-    );
-  }, [moduleOrder]);
-
-  const visibleSelectedTaskIds = useMemo(
+  const selectedVisibleTaskIds = useMemo(
     () =>
       selectedTaskIds.filter((taskId) =>
         todayTasks.some((task) => task.id === taskId),
       ),
     [selectedTaskIds, todayTasks],
   );
-
-  const activeEditingTask = useMemo(
-    () =>
-      editingTask
-        ? todayTasks.find((task) => task.id === editingTask.id) ?? null
-        : null,
-    [editingTask, todayTasks],
-  );
-
   const selectedTasks = useMemo(
-    () => todayTasks.filter((task) => visibleSelectedTaskIds.includes(task.id)),
-    [todayTasks, visibleSelectedTaskIds],
+    () => todayTasks.filter((task) => selectedVisibleTaskIds.includes(task.id)),
+    [selectedVisibleTaskIds, todayTasks],
   );
-
   const selectedActiveCount = selectedTasks.filter((task) => !task.completed).length;
   const selectedCompletedCount = selectedTasks.filter((task) => task.completed).length;
 
-  const handleTaskSubmit = (input: TaskFormInput) => {
-    const normalizedInput = normalizeTodayInput(input);
+  const draggingTask = useMemo(
+    () =>
+      draggingTaskId
+        ? todayTasks.find((task) => task.id === draggingTaskId) ?? null
+        : null,
+    [draggingTaskId, todayTasks],
+  );
 
-    if (activeEditingTask) {
-      const updatedTask: TaskItem = {
-        ...activeEditingTask,
-        title: normalizedInput.title,
-        deadline: normalizedInput.deadline,
-      };
+  useEffect(() => {
+    if (!recentlyAddedTaskId) {
+      return;
+    }
 
-      updateTask(activeEditingTask.id, normalizedInput);
-      setEditingTask(null);
+    const timeoutId = window.setTimeout(() => {
+      setRecentlyAddedTaskId(null);
+    }, 900);
 
-      if (isTaskStillInToday(updatedTask)) {
-        showToast('已保存修改。');
-      } else {
-        showToast('已保存，这条任务已移出今日任务。', 'info');
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [recentlyAddedTaskId]);
+
+  useEffect(() => {
+    if (!recentlyCompletedTaskId) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setRecentlyCompletedTaskId(null);
+    }, 900);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [recentlyCompletedTaskId]);
+
+  const announce = useCallback(
+    (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+      setLiveMessage(message);
+      showToast(message, type);
+    },
+    [showToast],
+  );
+
+  const handleTaskSubmit = useCallback(
+    (input: TaskFormInput) => {
+      if (activeEditingTask) {
+        const updatedTask: TaskItem = {
+          ...activeEditingTask,
+          title: input.title.trim(),
+          deadline: input.deadline,
+          priority: input.priority ?? activeEditingTask.priority,
+        };
+
+        updateTask(activeEditingTask.id, input);
+        setEditingTaskId(null);
+
+        if (isTaskStillInToday(updatedTask)) {
+          announce('已保存任务修改。');
+        } else {
+          announce('已保存，但这条任务已移出今日任务。', 'info');
+        }
+
+        return;
       }
 
-      return;
-    }
+      const createdTask = addTask(input);
+      setRecentlyAddedTaskId(createdTask.id);
+      announce(
+        `已添加任务，并设为${TASK_PRIORITY_LABELS[createdTask.priority]}优先级。`,
+      );
 
-    addTask(normalizedInput);
-    showToast('已记到今天。');
-  };
+      window.setTimeout(() => {
+        listHeadingRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }, 0);
+    },
+    [activeEditingTask, addTask, announce, updateTask],
+  );
 
-  const handleToggleTaskCompleted = (taskId: string) => {
-    const targetTask = todayTasks.find((task) => task.id === taskId);
-
-    if (!targetTask) {
-      return;
-    }
-
-    toggleTaskCompleted(taskId);
-    showToast(targetTask.completed ? '已恢复到待处理。' : '已标记为完成。');
-  };
-
-  const handleSelectChange = (taskId: string, selected: boolean) => {
+  const handleSelectChange = useCallback((taskId: string, selected: boolean) => {
     setSelectedTaskIds((currentIds) => {
       if (selected) {
         return currentIds.includes(taskId) ? currentIds : [...currentIds, taskId];
@@ -200,475 +232,399 @@ export function TodayPage() {
 
       return currentIds.filter((currentId) => currentId !== taskId);
     });
-  };
+  }, []);
 
-  const handleEditTask = (task: TaskItem) => {
-    setEditingTask(task);
+  const handleToggleTaskCompleted = useCallback(
+    (taskId: string) => {
+      const targetTask = todayTasks.find((task) => task.id === taskId);
 
+      if (!targetTask) {
+        return;
+      }
+
+      toggleTaskCompleted(taskId);
+      setRecentlyCompletedTaskId(taskId);
+      announce(targetTask.completed ? '已恢复为待处理。' : '已标记为完成。');
+    },
+    [announce, todayTasks, toggleTaskCompleted],
+  );
+
+  const handleEditTask = useCallback((task: TaskItem) => {
+    setEditingTaskId(task.id);
     window.setTimeout(() => {
-      composerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 0);
-  };
+  }, []);
 
-  const handleDeleteRequest = (task: TaskItem) => {
-    setPendingDelete({ type: 'single', task, taskIds: [task.id] });
-  };
+  const handleDeleteRequest = useCallback((task: TaskItem) => {
+    setPendingDelete({
+      taskIds: [task.id],
+      title: `确认删除“${task.title}”吗？删除后无法自动恢复。`,
+    });
+  }, []);
 
-  const handleConfirmDelete = () => {
+  const handlePriorityChange = useCallback(
+    (taskId: string, priority: TaskPriority) => {
+      updateTaskPriority(taskId, priority);
+      announce(
+        `已设为${TASK_PRIORITY_LABELS[priority]}优先级，${getPriorityDescription(priority)}。`,
+        'info',
+      );
+    },
+    [announce, updateTaskPriority],
+  );
+
+  const handleConfirmDelete = useCallback(() => {
     if (!pendingDelete) {
       return;
     }
 
     pendingDelete.taskIds.forEach((taskId) => {
-      if (activeEditingTask?.id === taskId) {
-        setEditingTask(null);
-      }
-
       deleteTask(taskId);
+
+      if (editingTaskId === taskId) {
+        setEditingTaskId(null);
+      }
     });
 
     setSelectedTaskIds((currentIds) =>
       currentIds.filter((taskId) => !pendingDelete.taskIds.includes(taskId)),
     );
 
-    showToast(
-      pendingDelete.type === 'batch'
-        ? `已移除 ${pendingDelete.taskIds.length} 条任务。`
-        : '已移除这条任务。',
+    announce(
+      pendingDelete.taskIds.length > 1
+        ? `已删除 ${pendingDelete.taskIds.length} 条任务。`
+        : '已删除这条任务。',
+      'info',
     );
     setPendingDelete(null);
-  };
+  }, [announce, deleteTask, editingTaskId, pendingDelete]);
 
-  const handleBatchComplete = () => {
+  const handleBatchComplete = useCallback(() => {
     selectedTasks
       .filter((task) => !task.completed)
       .forEach((task) => toggleTaskCompleted(task.id));
 
     if (selectedActiveCount) {
-      showToast(`已完成 ${selectedActiveCount} 条任务。`);
+      announce(`已完成 ${selectedActiveCount} 条任务。`);
     }
 
     setSelectedTaskIds([]);
-  };
+  }, [announce, selectedActiveCount, selectedTasks, toggleTaskCompleted]);
 
-  const handleBatchRestore = () => {
+  const handleBatchRestore = useCallback(() => {
     selectedTasks
       .filter((task) => task.completed)
       .forEach((task) => toggleTaskCompleted(task.id));
 
     if (selectedCompletedCount) {
-      showToast(`已恢复 ${selectedCompletedCount} 条任务。`, 'info');
+      announce(`已恢复 ${selectedCompletedCount} 条任务。`, 'info');
     }
 
     setSelectedTaskIds([]);
-  };
+  }, [announce, selectedCompletedCount, selectedTasks, toggleTaskCompleted]);
 
-  const handleLocateFocusTask = () => {
-    taskBoardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  const handleBatchPriorityChange = useCallback(
+    (priority: TaskPriority) => {
+      selectedTasks.forEach((task) => updateTaskPriority(task.id, priority));
 
-  const moveModule = (moduleKey: TodayModuleKey, direction: 'up' | 'down') => {
-    setModuleOrder((currentOrder) => {
-      const currentIndex = currentOrder.indexOf(moduleKey);
-
-      if (currentIndex === -1) {
-        return currentOrder;
+      if (selectedTasks.length) {
+        announce(
+          `已将 ${selectedTasks.length} 条任务设为${TASK_PRIORITY_LABELS[priority]}优先级。`,
+          'info',
+        );
       }
 
-      const targetIndex =
-        direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      setSelectedTaskIds([]);
+    },
+    [announce, selectedTasks, updateTaskPriority],
+  );
 
-      if (targetIndex < 0 || targetIndex >= currentOrder.length) {
-        return currentOrder;
-      }
-
-      return moveItem(currentOrder, currentIndex, targetIndex);
+  const handleSortChange = useCallback((value: TaskSortValue) => {
+    startTransition(() => {
+      setSortValue(value);
     });
-  };
+  }, []);
 
-  const handleDragStart = (moduleKey: TodayModuleKey) => {
-    setDraggingModule(moduleKey);
-  };
+  const handleStatusFilterChange = useCallback((value: TaskFilterValue) => {
+    startTransition(() => {
+      setStatusFilter(value);
+    });
+  }, []);
 
-  const handleDrop = (targetModuleKey: TodayModuleKey) => {
-    if (!draggingModule || draggingModule === targetModuleKey) {
-      setDraggingModule(null);
-      return;
-    }
+  const handlePriorityFilterChange = useCallback(
+    (value: TaskPriorityFilterValue) => {
+      startTransition(() => {
+        setPriorityFilter(value);
+      });
+    },
+    [],
+  );
 
-    setModuleOrder((currentOrder) => {
-      const fromIndex = currentOrder.indexOf(draggingModule);
-      const toIndex = currentOrder.indexOf(targetModuleKey);
-
-      if (fromIndex === -1 || toIndex === -1) {
-        return currentOrder;
+  const handlePriorityDrop = useCallback(
+    (priority: TaskPriority) => {
+      if (!draggingTaskId) {
+        return;
       }
 
-      return moveItem(currentOrder, fromIndex, toIndex);
-    });
-    setDraggingModule(null);
-  };
+      updateTaskPriority(draggingTaskId, priority);
+      announce(
+        `已把“${draggingTask?.title ?? '任务'}”调整为${TASK_PRIORITY_LABELS[priority]}优先级。`,
+        'info',
+      );
+      setDraggingTaskId(null);
+      setActiveDropPriority(null);
+    },
+    [announce, draggingTask, draggingTaskId, updateTaskPriority],
+  );
 
-  const topSummaryText = focusTask
-    ? `下一步先处理「${focusTask.title}」`
-    : todayTasks.length
-      ? '今天的任务已经完成得差不多了。'
-      : '今天还没排任务，先记一条最重要的事。';
+  const clearDraggingState = useCallback(() => {
+    setDraggingTaskId(null);
+    setActiveDropPriority(null);
+  }, []);
 
-  const renderModule = (moduleKey: TodayModuleKey, index: number) => {
-    const canMoveUp = index > 0;
-    const canMoveDown = index < moduleOrder.length - 1;
+  const statusButtons: Array<{ value: TaskFilterValue; label: string }> = [
+    { value: 'all', label: '全部' },
+    { value: 'active', label: '待处理' },
+    { value: 'completed', label: '已完成' },
+  ];
 
-    const moduleChrome = (
-      eyebrow: string,
-      title: string,
-      content: ReactNode,
-    ) => (
-      <article
-        className={`today-module-card ${
-          draggingModule === moduleKey ? 'today-module-card-dragging' : ''
-        }`}
-        draggable
-        onDragStart={() => handleDragStart(moduleKey)}
-        onDragOver={(event) => event.preventDefault()}
-        onDrop={() => handleDrop(moduleKey)}
-      >
-        <div className="today-module-head">
-          <div>
-            <p className="today-module-eyebrow">{eyebrow}</p>
-            <h2 className="section-title">{title}</h2>
-          </div>
-          <div className="today-module-tools">
-            <span className="today-drag-handle" aria-hidden="true">
-              拖动
-            </span>
-            <button
-              className="today-order-button"
-              type="button"
-              onClick={() => moveModule(moduleKey, 'up')}
-              disabled={!canMoveUp}
-            >
-              上移
-            </button>
-            <button
-              className="today-order-button"
-              type="button"
-              onClick={() => moveModule(moduleKey, 'down')}
-              disabled={!canMoveDown}
-            >
-              下移
-            </button>
-          </div>
-        </div>
-        {content}
-      </article>
-    );
+  const priorityButtons: Array<{ value: TaskPriorityFilterValue; label: string }> = [
+    { value: 'all', label: '全部优先级' },
+    { value: 'high', label: '高' },
+    { value: 'medium', label: '中' },
+    { value: 'low', label: '低' },
+  ];
 
-    if (moduleKey === 'focus') {
-      return moduleChrome(
-        '现在先做',
-        focusTask ? focusTask.title : '先排出今天最重要的一件事',
-        focusTask ? (
-          <div className="today-focus-body">
-            <p className="today-focus-copy">
-              {isTaskDateOverdue(focusTask.deadline, focusTask.completed)
-                ? '这条任务已经逾期，建议先把它收掉。'
-                : '这是当前最接近截止时间的待处理任务。'}
-            </p>
-            <div className="today-focus-actions">
-              <button
-                className="button button-primary"
-                type="button"
-                onClick={handleLocateFocusTask}
-              >
-                定位到列表
-              </button>
-              <Link className="button button-secondary" to="/pomodoro">
-                开始专注
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <div className="today-focus-body">
-            <p className="today-focus-copy">
-              今天的列表还是空的。先记一条最重要的任务，后面我们再慢慢补齐。
-            </p>
+  return (
+    <div className="page-stack today-v2-page">
+      <div className="today-v2-live-region" aria-live="polite" aria-atomic="true">
+        {liveMessage}
+      </div>
+
+      <section className="panel today-v2-core">
+        <div className="today-v2-core-copy">
+          <p className="today-v2-kicker">今日核心任务</p>
+          <h1 className="today-v2-title">
+            {coreTask ? coreTask.title : '先安排今天最重要的事'}
+          </h1>
+          <p className="today-v2-description">
+            {coreTask
+              ? `建议先处理这条${TASK_PRIORITY_LABELS[coreTask.priority]}优先级任务。它会直接影响今天的推进节奏。`
+              : '今天还没有任务。先用下面的表单记下一条最重要的任务，再开始推进。'}
+          </p>
+          <div className="today-v2-core-actions">
             <button
               className="button button-primary"
               type="button"
               onClick={() =>
-                composerRef.current?.scrollIntoView({
+                listHeadingRef.current?.scrollIntoView({
                   behavior: 'smooth',
                   block: 'start',
                 })
               }
             >
-              现在就记一条
+              查看今日任务列表
             </button>
-          </div>
-        ),
-      );
-    }
-
-    if (moduleKey === 'composer') {
-      return (
-        <div
-          ref={(node) => {
-            composerRef.current = node;
-          }}
-        >
-          {moduleChrome(
-            activeEditingTask ? '正在修改' : '快速新增',
-            activeEditingTask ? activeEditingTask.title : '把今天要做的事记下来',
-            <>
-              <p className="section-description">
-                {activeEditingTask
-                  ? '保存后，今日列表会立即更新。如果你把时间改到明天，这条任务会自动离开今日页。'
-                  : '先记标题和时间就够了，系统会自动保存到本地。'}
-              </p>
-              <TodayQuickAddForm
-                key={activeEditingTask?.id ?? 'today-quick-create'}
-                initialTask={activeEditingTask}
-                onSubmit={handleTaskSubmit}
-                onCancel={() => setEditingTask(null)}
-              />
-            </>,
-          )}
-        </div>
-      );
-    }
-
-    return moduleChrome(
-      '专注入口',
-      '把下一段时间留给一件事',
-      <div className="today-pomodoro-card">
-        <div className="today-pomodoro-meta">
-          <div>
-            <span className="today-pomodoro-label">当前状态</span>
-            <strong>{formatPomodoroStatus(pomodoroApi.pomodoro.status)}</strong>
-          </div>
-          <div>
-            <span className="today-pomodoro-label">剩余时间</span>
-            <strong>{formatTime(pomodoroApi.pomodoro.remainingSeconds)}</strong>
-          </div>
-        </div>
-        <p className="today-focus-copy">
-          当你已经知道接下来先做什么时，直接开始一个番茄钟会更容易进入状态。
-        </p>
-        <Link className="button button-primary" to="/pomodoro">
-          打开番茄钟
-        </Link>
-      </div>,
-    );
-  };
-
-  return (
-    <div className="page-stack today-page">
-      <section className="today-hero panel">
-        <div className="today-hero-content">
-          <p className="today-hero-kicker">Today workbench</p>
-          <h1 className="today-hero-title">今天</h1>
-          <p className="today-hero-description">{topSummaryText}</p>
-          <div className="today-hero-actions">
-            <Link className="button button-primary" to="/week">
+            <Link className="button button-secondary" to="/week">
               查看本周安排
             </Link>
-            <Link className="button button-secondary" to="/">
-              回到总览
-            </Link>
           </div>
         </div>
 
-        <aside className="today-progress-panel" aria-label="今日完成进度">
-          <div
-            className="today-progress-ring"
-            style={
-              {
-                '--today-progress': `${completionRate}%`,
-              } as CSSProperties
-            }
-          >
-            <div className="today-progress-inner">
-              <strong>{completionRate}%</strong>
-              <span>完成率</span>
-            </div>
+        <div className="today-v2-core-metrics">
+          <div className="today-v2-core-metric">
+            <span>今日任务</span>
+            <strong>{todayTasks.length}</strong>
           </div>
-          <div className="today-progress-stats">
-            <div>
-              <span>待处理</span>
-              <strong>{filterCounts.active}</strong>
-            </div>
-            <div>
-              <span>已完成</span>
-              <strong>{filterCounts.completed}</strong>
-            </div>
-            <div>
-              <span>逾期</span>
-              <strong>{overdueTasks.length}</strong>
-            </div>
+          <div className="today-v2-core-metric">
+            <span>待处理</span>
+            <strong>{activeTasks.length}</strong>
           </div>
-        </aside>
+          <div className="today-v2-core-metric">
+            <span>完成率</span>
+            <strong>{completionRate}%</strong>
+          </div>
+        </div>
       </section>
 
-      <section className="today-summary-grid" aria-label="今日概览">
-        <article className="today-summary-card">
-          <span>今天相关任务</span>
-          <strong>{todayTasks.length}</strong>
-          <p>含今天到期和已逾期任务</p>
-        </article>
-        <article className="today-summary-card">
-          <span>下一步建议</span>
-          <strong>{focusTask ? '先收掉一条' : '先新增一条'}</strong>
-          <p>{focusTask ? focusTask.title : '把今天最重要的任务先写下来'}</p>
-        </article>
-        <article className="today-summary-card">
-          <span>当前节奏</span>
-          <strong>{formatPomodoroStatus(pomodoroApi.pomodoro.status)}</strong>
-          <p>剩余 {formatTime(pomodoroApi.pomodoro.remainingSeconds)}</p>
-        </article>
-      </section>
+      <section className="today-v2-layout">
+        <div className="today-v2-main">
+          <section className="panel today-v2-composer">
+            <div className="today-v2-section-head">
+              <div>
+                <p className="today-v2-kicker">
+                  {activeEditingTask ? '编辑任务' : '新增任务'}
+                </p>
+                <h2 className="section-title">
+                  {activeEditingTask ? '更新当前任务' : '快速添加到今天'}
+                </h2>
+              </div>
+              <span className="today-v2-inline-note">默认带优先级和截止时间</span>
+            </div>
+            <TodayQuickAddForm
+              key={activeEditingTask?.id ?? 'today-v2-create'}
+              initialTask={activeEditingTask}
+              onSubmit={handleTaskSubmit}
+              onCancel={() => setEditingTaskId(null)}
+            />
+          </section>
 
-      <section className="today-modules-grid" aria-label="今日功能模块">
-        {moduleOrder.map((moduleKey, index) => (
-          <div key={moduleKey}>{renderModule(moduleKey, index)}</div>
-        ))}
-      </section>
+          <section className="panel today-v2-toolbar-card">
+            <div className="today-v2-section-head">
+              <div>
+                <p className="today-v2-kicker">筛选与排序</p>
+                <h2 ref={listHeadingRef} className="section-title">
+                  今日任务列表
+                </h2>
+              </div>
+              <Link className="text-link" to="/">
+                回到总览
+              </Link>
+            </div>
 
-      <section className="panel today-task-board-panel" ref={taskBoardRef}>
-        <div className="today-task-toolbar">
-          <div>
-            <h2 className="section-title">今天的任务板</h2>
-            <p className="section-description">
-              先看逾期，再处理今天要完成的事。已完成的内容默认收起，避免打扰。
-            </p>
-          </div>
-          <TodayFilterTabs
-            value={filter}
-            onChange={setFilter}
-            counts={filterCounts}
-          />
+            <div className="today-v2-toolbar">
+              <div className="today-v2-filter-group" role="toolbar" aria-label="状态筛选">
+                {statusButtons.map((button) => (
+                  <button
+                    key={button.value}
+                    className={`today-v2-filter-button ${
+                      statusFilter === button.value ? 'today-v2-filter-button-active' : ''
+                    }`}
+                    type="button"
+                    aria-pressed={statusFilter === button.value}
+                    onClick={() => handleStatusFilterChange(button.value)}
+                  >
+                    {button.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="today-v2-filter-group" role="toolbar" aria-label="优先级筛选">
+                {priorityButtons.map((button) => (
+                  <button
+                    key={button.value}
+                    className={`today-v2-filter-button ${
+                      priorityFilter === button.value
+                        ? 'today-v2-filter-button-active'
+                        : ''
+                    }`}
+                    type="button"
+                    aria-pressed={priorityFilter === button.value}
+                    onClick={() => handlePriorityFilterChange(button.value)}
+                  >
+                    {button.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {selectedVisibleTaskIds.length ? (
+            <section className="panel today-v2-batch-bar" aria-label="批量操作">
+              <div>
+                <strong>已选择 {selectedVisibleTaskIds.length} 条任务</strong>
+                <p>可以一次性完成、恢复、删除，或直接批量改优先级。</p>
+              </div>
+
+              <div className="today-v2-batch-actions">
+                <button
+                  className="button button-primary"
+                  type="button"
+                  disabled={!selectedActiveCount}
+                  onClick={handleBatchComplete}
+                >
+                  批量完成
+                </button>
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  disabled={!selectedCompletedCount}
+                  onClick={handleBatchRestore}
+                >
+                  恢复待处理
+                </button>
+                {TASK_PRIORITY_OPTIONS.map((priority) => (
+                  <button
+                    key={priority}
+                    className="button button-secondary"
+                    type="button"
+                    onClick={() => handleBatchPriorityChange(priority)}
+                  >
+                    设为{TASK_PRIORITY_LABELS[priority]}
+                  </button>
+                ))}
+                <button
+                  className="button button-danger"
+                  type="button"
+                  onClick={() =>
+                    setPendingDelete({
+                      taskIds: selectedVisibleTaskIds,
+                      title: `确认删除这 ${selectedVisibleTaskIds.length} 条任务吗？删除后无法自动恢复。`,
+                    })
+                  }
+                >
+                  批量删除
+                </button>
+              </div>
+            </section>
+          ) : null}
+
+          <section className="panel today-v2-list-card">
+            {deferredTasks.length === 0 ? (
+              <EmptyState
+                title="当前筛选下没有任务"
+                description="可以切换筛选条件，或者先添加一条新的今日任务。"
+              />
+            ) : (
+              <VirtualTaskList
+                items={deferredTasks}
+                ariaLabel="今日任务列表"
+                getItemKey={(task) => task.id}
+                renderItem={(task) => (
+                  <TodayTaskCard
+                    task={task}
+                    selected={selectedVisibleTaskIds.includes(task.id)}
+                    isNew={recentlyAddedTaskId === task.id}
+                    isCompleting={recentlyCompletedTaskId === task.id}
+                    isDragging={draggingTaskId === task.id}
+                    onSelectChange={handleSelectChange}
+                    onToggleTaskCompleted={handleToggleTaskCompleted}
+                    onEditTask={handleEditTask}
+                    onDeleteTask={handleDeleteRequest}
+                    onPriorityChange={handlePriorityChange}
+                    onDragStart={setDraggingTaskId}
+                    onDragEnd={clearDraggingState}
+                  />
+                )}
+              />
+            )}
+          </section>
         </div>
 
-        {visibleSelectedTaskIds.length ? (
-          <div className="today-batch-bar" role="status" aria-live="polite">
-            <div>
-              <strong>已选择 {visibleSelectedTaskIds.length} 条任务</strong>
-              <p>可以批量完成、恢复或移除，减少重复点击。</p>
-            </div>
-            <div className="today-batch-actions">
-              <button
-                className="button button-primary"
-                type="button"
-                onClick={handleBatchComplete}
-                disabled={!selectedActiveCount}
-              >
-                批量做完
-              </button>
-              <button
-                className="button button-secondary"
-                type="button"
-                onClick={handleBatchRestore}
-                disabled={!selectedCompletedCount}
-              >
-                恢复待处理
-              </button>
-              <button
-                className="button button-danger"
-                type="button"
-                onClick={() =>
-                  setPendingDelete({
-                    type: 'batch',
-                    taskIds: visibleSelectedTaskIds,
-                  })
-                }
-              >
-                批量移除
-              </button>
-              <button
-                className="button button-secondary"
-                type="button"
-                onClick={() => setSelectedTaskIds([])}
-              >
-                清空选择
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        {!todayTasks.length ? (
-          <EmptyState
-            title="今天还没排任务"
-            description="先记一条今天要做的事，或者把已有任务的截止时间安排到今天。"
-          />
-        ) : (
-          <div id="today-task-board" className="today-sections-stack">
-            {filter !== 'completed' ? (
-              <TodayTaskSection
-                id="today-overdue"
-                title="需要先处理"
-                description="这些任务已经逾期，建议优先清掉。"
-                tasks={overdueTasks}
-                selectedTaskIds={visibleSelectedTaskIds}
-                onSelectChange={handleSelectChange}
-                onToggleTaskCompleted={handleToggleTaskCompleted}
-                onEditTask={handleEditTask}
-                onDeleteTask={handleDeleteRequest}
-                emptyTitle="没有逾期任务"
-                emptyDescription="很好，今天可以把注意力放在按计划推进上。"
-              />
-            ) : null}
-
-            {filter !== 'completed' ? (
-              <TodayTaskSection
-                id="today-active"
-                title="今天待处理"
-                description="这是今天还没完成的任务，按截止时间从近到远排序。"
-                tasks={activeTasks}
-                selectedTaskIds={visibleSelectedTaskIds}
-                onSelectChange={handleSelectChange}
-                onToggleTaskCompleted={handleToggleTaskCompleted}
-                onEditTask={handleEditTask}
-                onDeleteTask={handleDeleteRequest}
-                emptyTitle="今天待处理列表是空的"
-                emptyDescription="如果逾期区也没有任务，说明今天已经处理得不错了。"
-              />
-            ) : null}
-
-            {filter !== 'active' ? (
-              <TodayTaskSection
-                id="today-completed"
-                title="今天已完成"
-                description="先默认收起来，减少视觉噪音；需要回顾时再展开。"
-                tasks={completedTasks}
-                selectedTaskIds={visibleSelectedTaskIds}
-                onSelectChange={handleSelectChange}
-                onToggleTaskCompleted={handleToggleTaskCompleted}
-                onEditTask={handleEditTask}
-                onDeleteTask={handleDeleteRequest}
-                emptyTitle="今天还没有完成项"
-                emptyDescription="完成一条后，这里会自动出现。"
-                collapsible
-                collapsed={isCompletedCollapsed}
-                onToggleCollapsed={() =>
-                  setIsCompletedCollapsed((currentValue) => !currentValue)
-                }
-              />
-            ) : null}
-          </div>
-        )}
+        <TodaySummarySidebar
+          totalCount={todayTasks.length}
+          activeCount={activeTasks.length}
+          completedCount={completedTasks.length}
+          completionRate={completionRate}
+          coreTask={coreTask}
+          sortValue={sortValue}
+          onSortChange={handleSortChange}
+          priorityCounts={priorityCounts}
+          selectedCount={selectedVisibleTaskIds.length}
+          draggingTaskTitle={draggingTask?.title ?? null}
+          activeDropPriority={activeDropPriority}
+          onPriorityDragOver={setActiveDropPriority}
+          onPriorityDrop={handlePriorityDrop}
+          onPriorityDragLeave={() => setActiveDropPriority(null)}
+        />
       </section>
 
       <ConfirmModal
         open={Boolean(pendingDelete)}
-        title={
-          pendingDelete?.type === 'batch' ? '确认批量移除任务' : '确认移除任务'
-        }
-        description={
-          pendingDelete?.type === 'batch'
-            ? `确认移除这 ${pendingDelete.taskIds.length} 条任务吗？移除后将无法自动恢复。`
-            : `确认移除“${pendingDelete?.task?.title ?? ''}”吗？移除后将无法自动恢复。`
-        }
-        confirmLabel="移除"
+        title="确认删除任务"
+        description={pendingDelete?.title ?? ''}
+        confirmLabel="删除"
         cancelLabel="取消"
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingDelete(null)}

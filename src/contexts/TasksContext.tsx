@@ -7,12 +7,32 @@ import type { UseTasksResult } from '../hooks/useTasks';
 const TasksContext = createContext<UseTasksResult | null>(null);
 
 export function TasksProvider({ children }: { children: React.ReactNode }) {
-  const { tasks, addTask, updateTask, deleteTask, toggleTaskCompleted } =
-    useTasks();
+  const {
+    tasks,
+    addTask,
+    updateTask,
+    updateTaskPriority,
+    deleteTask,
+    toggleTaskCompleted,
+  } = useTasks();
 
   const value = useMemo<UseTasksResult>(
-    () => ({ tasks, addTask, updateTask, deleteTask, toggleTaskCompleted }),
-    [tasks, addTask, updateTask, deleteTask, toggleTaskCompleted],
+    () => ({
+      tasks,
+      addTask,
+      updateTask,
+      updateTaskPriority,
+      deleteTask,
+      toggleTaskCompleted,
+    }),
+    [
+      tasks,
+      addTask,
+      updateTask,
+      updateTaskPriority,
+      deleteTask,
+      toggleTaskCompleted,
+    ],
   );
 
   return (
