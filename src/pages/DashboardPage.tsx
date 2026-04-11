@@ -1,46 +1,41 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatCard } from '../components/stats/StatCard';
 import { TaskForm } from '../components/task/TaskForm';
 import { TaskList } from '../components/task/TaskList';
-import type { UsePomodoroResult } from '../hooks/usePomodoro';
-import type { UseTasksResult } from '../hooks/useTasks';
+import { usePomodoroContext } from '../contexts/PomodoroContext';
+import { useTasksContext } from '../contexts/TasksContext';
+import { useToast } from '../contexts/ToastContext';
 import type { TaskFormInput, TaskItem } from '../types/task';
 import { formatTime } from '../utils/date';
 import { formatPomodoroStatus } from '../utils/pomodoro';
 import { calculateTaskStats } from '../utils/stats';
 import { getTodayTasks } from '../utils/task';
 
-interface DashboardPageProps {
-  tasksApi: UseTasksResult;
-  pomodoroApi: UsePomodoroResult;
-}
-
-export function DashboardPage({
-  tasksApi,
-  pomodoroApi,
-}: DashboardPageProps) {
-  const {
-    tasks,
-    addTask,
-    updateTask,
-    deleteTask,
-    toggleTaskCompleted,
-  } = tasksApi;
+export function DashboardPage() {
+  const { tasks, addTask, updateTask, deleteTask, toggleTaskCompleted } =
+    useTasksContext();
+  const pomodoroApi = usePomodoroContext();
+  const { showToast } = useToast();
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
-  const stats = calculateTaskStats(tasks);
-  const todayTasks = getTodayTasks(tasks);
-  const todayActiveCount = todayTasks.filter((task) => !task.completed).length;
+  const stats = useMemo(() => calculateTaskStats(tasks), [tasks]);
+  const todayTasks = useMemo(() => getTodayTasks(tasks), [tasks]);
+  const todayActiveCount = useMemo(
+    () => todayTasks.filter((task) => !task.completed).length,
+    [todayTasks],
+  );
 
   const handleSubmit = (input: TaskFormInput) => {
     if (editingTask) {
       updateTask(editingTask.id, input);
       setEditingTask(null);
+      showToast('任务已更新');
       return;
     }
 
     addTask(input);
+    showToast('任务已新增');
   };
 
   const handleDeleteTask = (taskId: string) => {
@@ -49,6 +44,7 @@ export function DashboardPage({
     }
 
     deleteTask(taskId);
+    showToast('任务已删除');
   };
 
   return (

@@ -1,14 +1,12 @@
+import { useMemo } from 'react';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatCard } from '../components/stats/StatCard';
-import type { UseTasksResult } from '../hooks/useTasks';
+import { useTasksContext } from '../contexts/TasksContext';
 import { calculateTaskStats } from '../utils/stats';
 
-interface StatsPageProps {
-  tasksApi: UseTasksResult;
-}
-
-export function StatsPage({ tasksApi }: StatsPageProps) {
-  const stats = calculateTaskStats(tasksApi.tasks);
+export function StatsPage() {
+  const { tasks } = useTasksContext();
+  const stats = useMemo(() => calculateTaskStats(tasks), [tasks]);
 
   return (
     <div className="page-stack">

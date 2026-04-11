@@ -1,34 +1,38 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { EmptyState } from '../components/common/EmptyState';
 import { PageHeader } from '../components/common/PageHeader';
 import { TaskFilters } from '../components/task/TaskFilters';
 import { TaskForm } from '../components/task/TaskForm';
 import { TaskList } from '../components/task/TaskList';
-import type { UseTasksResult } from '../hooks/useTasks';
+import { useTasksContext } from '../contexts/TasksContext';
+import { useToast } from '../contexts/ToastContext';
 import type { TaskFilterValue, TaskFormInput, TaskItem } from '../types/task';
 import { filterTasksByStatus, getWeekTaskGroups } from '../utils/task';
 
-interface WeekPageProps {
-  tasksApi: UseTasksResult;
-}
-
-export function WeekPage({ tasksApi }: WeekPageProps) {
-  const { tasks, updateTask, deleteTask, toggleTaskCompleted } = tasksApi;
+export function WeekPage() {
+  const { tasks, updateTask, deleteTask, toggleTaskCompleted } =
+    useTasksContext();
+  const { showToast } = useToast();
   const [filter, setFilter] = useState<TaskFilterValue>('all');
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
 
-  const groups = getWeekTaskGroups(tasks)
-    .map((group) => ({
-      ...group,
-      tasks: filterTasksByStatus(group.tasks, filter),
-    }))
-    .filter((group) => group.tasks.length > 0);
+  const groups = useMemo(
+    () =>
+      getWeekTaskGroups(tasks)
+        .map((group) => ({
+          ...group,
+          tasks: filterTasksByStatus(group.tasks, filter),
+        }))
+        .filter((group) => group.tasks.length > 0),
+    [tasks, filter],
+  );
 
   const handleSubmit = (input: TaskFormInput) => {
     if (editingTask) {
       updateTask(editingTask.id, input);
       setEditingTask(null);
+      showToast('任务已更新');
     }
   };
 
@@ -38,6 +42,7 @@ export function WeekPage({ tasksApi }: WeekPageProps) {
     }
 
     deleteTask(taskId);
+    showToast('任务已删除');
   };
 
   return (

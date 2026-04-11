@@ -12,14 +12,28 @@ export interface TaskStats {
 
 export function calculateTaskStats(tasks: TaskItem[]): TaskStats {
   const totalCount = tasks.length;
-  const completedCount = tasks.filter((task) => task.completed).length;
+
+  let completedCount = 0;
+  let todayCompletedCount = 0;
+  let weekCompletedCount = 0;
+
+  for (const task of tasks) {
+    if (!task.completed) {
+      continue;
+    }
+
+    completedCount++;
+
+    if (isTodayDate(task.completedAt)) {
+      todayCompletedCount++;
+    }
+
+    if (isThisWeekDate(task.completedAt)) {
+      weekCompletedCount++;
+    }
+  }
+
   const activeCount = totalCount - completedCount;
-  const todayCompletedCount = tasks.filter(
-    (task) => task.completed && isTodayDate(task.completedAt),
-  ).length;
-  const weekCompletedCount = tasks.filter(
-    (task) => task.completed && isThisWeekDate(task.completedAt),
-  ).length;
   const completionRate =
     totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
 

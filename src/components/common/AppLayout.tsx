@@ -1,12 +1,8 @@
 import { useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import type { PomodoroStatus } from '../../types/pomodoro';
+import { usePomodoroContext } from '../../contexts/PomodoroContext';
+import { useTasksContext } from '../../contexts/TasksContext';
 import { formatPomodoroStatus } from '../../utils/pomodoro';
-
-interface AppLayoutProps {
-  pendingTaskCount: number;
-  pomodoroStatus: PomodoroStatus;
-}
 
 const navItems = [
   { to: '/', label: '仪表盘', end: true },
@@ -16,10 +12,14 @@ const navItems = [
   { to: '/stats', label: '统计' },
 ];
 
-export function AppLayout({
-  pendingTaskCount,
-  pomodoroStatus,
-}: AppLayoutProps) {
+export function AppLayout() {
+  const { tasks } = useTasksContext();
+  const { pomodoro } = usePomodoroContext();
+  const pendingTaskCount = useMemo(
+    () => tasks.filter((task) => !task.completed).length,
+    [tasks],
+  );
+  const pomodoroStatus = pomodoro.status;
   const location = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -76,7 +76,7 @@ export function AppLayout({
           isDrawerOpen ? 'mobile-drawer-backdrop-open' : ''
         }`}
         onClick={() => setIsDrawerOpen(false)}
-        aria-hidden={isDrawerOpen ? 'false' : 'true'}
+        aria-hidden="true"
       />
 
       <aside className={`mobile-drawer ${isDrawerOpen ? 'mobile-drawer-open' : ''}`}>

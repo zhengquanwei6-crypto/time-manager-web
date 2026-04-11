@@ -1,28 +1,31 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PageHeader } from '../components/common/PageHeader';
 import { TaskFilters } from '../components/task/TaskFilters';
 import { TaskForm } from '../components/task/TaskForm';
 import { TaskList } from '../components/task/TaskList';
-import type { UseTasksResult } from '../hooks/useTasks';
+import { useTasksContext } from '../contexts/TasksContext';
+import { useToast } from '../contexts/ToastContext';
 import type { TaskFilterValue, TaskFormInput, TaskItem } from '../types/task';
 import { filterTasksByStatus, getTodayTasks } from '../utils/task';
 
-interface TodayPageProps {
-  tasksApi: UseTasksResult;
-}
-
-export function TodayPage({ tasksApi }: TodayPageProps) {
-  const { tasks, updateTask, deleteTask, toggleTaskCompleted } = tasksApi;
+export function TodayPage() {
+  const { tasks, updateTask, deleteTask, toggleTaskCompleted } =
+    useTasksContext();
+  const { showToast } = useToast();
   const [filter, setFilter] = useState<TaskFilterValue>('all');
   const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
 
-  const todayTasks = filterTasksByStatus(getTodayTasks(tasks), filter);
+  const todayTasks = useMemo(
+    () => filterTasksByStatus(getTodayTasks(tasks), filter),
+    [tasks, filter],
+  );
 
   const handleSubmit = (input: TaskFormInput) => {
     if (editingTask) {
       updateTask(editingTask.id, input);
       setEditingTask(null);
+      showToast('任务已更新');
     }
   };
 
@@ -32,6 +35,7 @@ export function TodayPage({ tasksApi }: TodayPageProps) {
     }
 
     deleteTask(taskId);
+    showToast('任务已删除');
   };
 
   return (

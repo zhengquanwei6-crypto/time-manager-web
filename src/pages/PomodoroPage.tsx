@@ -1,26 +1,45 @@
+import { useState } from 'react';
 import { PageHeader } from '../components/common/PageHeader';
 import { PomodoroTimer } from '../components/pomodoro/PomodoroTimer';
 import { TimerControls } from '../components/pomodoro/TimerControls';
-import type { UsePomodoroResult } from '../hooks/usePomodoro';
+import { usePomodoroContext } from '../contexts/PomodoroContext';
 
-interface PomodoroPageProps {
-  pomodoroApi: UsePomodoroResult;
-}
+const DURATION_OPTIONS = [15, 25, 45, 60];
 
-export function PomodoroPage({ pomodoroApi }: PomodoroPageProps) {
-  const { pomodoro, startTimer, pauseTimer, resetTimer } = pomodoroApi;
+export function PomodoroPage() {
+  const { pomodoro, startTimer, pauseTimer, resetTimer, setDuration } =
+    usePomodoroContext();
+  const [notificationStatus, setNotificationStatus] = useState<string>(() =>
+    'Notification' in window ? Notification.permission : 'unsupported',
+  );
+
+  const isIdle = pomodoro.status === 'idle';
+  const currentMinutes = Math.round(pomodoro.durationSeconds / 60);
+  const canRequestNotification = notificationStatus === 'default';
+
+  const handleEnableNotification = () => {
+    if (!('Notification' in window)) {
+      setNotificationStatus('unsupported');
+      return;
+    }
+
+    void Notification.requestPermission().then((permission) => {
+      setNotificationStatus(permission);
+    });
+  };
 
   return (
     <div className="page-stack">
       <PageHeader
-        title="番茄钟页"
-        description="这里提供可用的基础倒计时界面，并支持本地保存与刷新后恢复。"
+        title="番茄钟"
+        description="专注倒计时，计时结束后会通过声音和浏览器通知提醒你。"
       />
 
       <section className="two-column-grid">
         <div className="panel">
           <PomodoroTimer
             remainingSeconds={pomodoro.remainingSeconds}
+            durationSeconds={pomodoro.durationSeconds}
             status={pomodoro.status}
           />
           <TimerControls
@@ -32,21 +51,58 @@ export function PomodoroPage({ pomodoroApi }: PomodoroPageProps) {
         </div>
 
         <div className="panel">
-          <h3 className="section-title">当前实现说明</h3>
+          <h3 className="section-title">时长设置</h3>
+          <p className="section-description">
+            {isIdle
+              ? '选择你想要的专注时长，然后点击开始。'
+              : '计时进行中无法切换时长，请先重置。'}
+          </p>
+          <div className="duration-options">
+            {DURATION_OPTIONS.map((minutes) => (
+              <button
+                key={minutes}
+                className={`button duration-button ${
+                  currentMinutes === minutes ? 'duration-button-active' : 'button-secondary'
+                }`}
+                type="button"
+                disabled={!isIdle}
+                onClick={() => setDuration(minutes)}
+              >
+                {minutes} 分钟
+              </button>
+            ))}
+          </div>
+
+          <h3 className="section-title" style={{ marginTop: 24 }}>
+            提醒设置
+          </h3>
           <div className="info-list">
             <div className="info-row">
-              <span>默认时长</span>
-              <strong>25 分钟</strong>
+              <span>声音提醒</span>
+              <strong>已启用</strong>
             </div>
             <div className="info-row">
-              <span>本地保存</span>
-              <strong>已接入 localStorage</strong>
-            </div>
-            <div className="info-row">
-              <span>当前阶段</span>
-              <strong>可用的 MVP 版本</strong>
+              <span>浏览器通知</span>
+              <strong>
+                {notificationStatus === 'granted'
+                  ? '已授权'
+                  : notificationStatus === 'denied'
+                    ? '已拒绝'
+                    : notificationStatus === 'unsupported'
+                      ? '不支持'
+                      : '未授权'}
+              </strong>
             </div>
           </div>
+          {canRequestNotification ? (
+            <button
+              className="button button-primary inline-link-button"
+              type="button"
+              onClick={handleEnableNotification}
+            >
+              授权浏览器通知
+            </button>
+          ) : null}
         </div>
       </section>
     </div>

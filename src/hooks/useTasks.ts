@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import type { TaskFormInput, TaskItem } from '../types/task';
 import { loadTasksFromStorage, saveTasksToStorage } from '../utils/storage';
@@ -7,6 +7,8 @@ import {
   sortTasksByDeadline,
   updateTaskItem,
 } from '../utils/task';
+
+const STORAGE_DEBOUNCE_MS = 300;
 
 export interface UseTasksResult {
   tasks: TaskItem[];
@@ -27,17 +29,39 @@ export function useTasks(): UseTasksResult {
     return [];
   });
 
+  const saveTimerRef = useRef<number | undefined>(undefined);
+
   useEffect(() => {
-    saveTasksToStorage(tasks);
+    window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => {
+      saveTasksToStorage(tasks);
+    }, STORAGE_DEBOUNCE_MS);
+
+    return () => {
+      window.clearTimeout(saveTimerRef.current);
+    };
   }, [tasks]);
 
-  const addTask = (input: TaskFormInput) => {
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      window.clearTimeout(saveTimerRef.current);
+      saveTasksToStorage(tasks);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [tasks]);
+
+  const addTask = useCallback((input: TaskFormInput) => {
     setTasks((currentTasks) =>
       sortTasksByDeadline([...currentTasks, createTask(input)]),
     );
-  };
+  }, []);
 
-  const updateTask = (taskId: string, input: TaskFormInput) => {
+  const updateTask = useCallback((taskId: string, input: TaskFormInput) => {
     setTasks((currentTasks) =>
       sortTasksByDeadline(
         currentTasks.map((task) =>
@@ -45,15 +69,15 @@ export function useTasks(): UseTasksResult {
         ),
       ),
     );
-  };
+  }, []);
 
-  const deleteTask = (taskId: string) => {
+  const deleteTask = useCallback((taskId: string) => {
     setTasks((currentTasks) =>
       currentTasks.filter((task) => task.id !== taskId),
     );
-  };
+  }, []);
 
-  const toggleTaskCompleted = (taskId: string) => {
+  const toggleTaskCompleted = useCallback((taskId: string) => {
     setTasks((currentTasks) =>
       sortTasksByDeadline(
         currentTasks.map((task) => {
@@ -71,7 +95,7 @@ export function useTasks(): UseTasksResult {
         }),
       ),
     );
-  };
+  }, []);
 
   return {
     tasks,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { formatInputDateTime, toIsoFromInput } from '../../utils/date';
 import type { TaskFormInput, TaskItem } from '../../types/task';
 
@@ -13,6 +13,7 @@ export function TaskForm({
   onSubmit,
   onCancel,
 }: TaskFormProps) {
+  const formId = useId();
   const [title, setTitle] = useState(initialTask?.title ?? '');
   const [deadlineInput, setDeadlineInput] = useState(
     formatInputDateTime(initialTask?.deadline ?? null),
@@ -20,6 +21,8 @@ export function TaskForm({
   const [errorMessage, setErrorMessage] = useState('');
 
   const isEditing = Boolean(initialTask);
+  const titleId = `${formId}-title`;
+  const deadlineId = `${formId}-deadline`;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -45,11 +48,11 @@ export function TaskForm({
   return (
     <form className="task-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label className="form-label" htmlFor="task-title">
+        <label className="form-label" htmlFor={titleId}>
           任务名称
         </label>
         <input
-          id="task-title"
+          id={titleId}
           className="form-input"
           type="text"
           placeholder="例如：完成今天的日报"
@@ -60,11 +63,11 @@ export function TaskForm({
       </div>
 
       <div className="form-group">
-        <label className="form-label" htmlFor="task-deadline">
+        <label className="form-label" htmlFor={deadlineId}>
           截止时间
         </label>
         <input
-          id="task-deadline"
+          id={deadlineId}
           className="form-input"
           type="datetime-local"
           value={deadlineInput}

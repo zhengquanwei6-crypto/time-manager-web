@@ -1,10 +1,12 @@
 import dayjs, { type Dayjs } from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/zh-cn';
 
 dayjs.extend(isoWeek);
 dayjs.extend(localizedFormat);
+dayjs.extend(relativeTime);
 dayjs.locale('zh-cn');
 
 export function formatTaskDateTime(value: string | null): string {
@@ -76,6 +78,20 @@ export function getCurrentWeekDays(baseDate: Dayjs = dayjs()): Dayjs[] {
 
 export function formatWeekLabel(value: string): string {
   return dayjs(value).format('MM-DD dddd');
+}
+
+export function formatRelativeTime(value: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const date = dayjs(value);
+
+  if (!date.isValid()) {
+    return null;
+  }
+
+  return date.fromNow();
 }
 
 export function formatTime(seconds: number): string {

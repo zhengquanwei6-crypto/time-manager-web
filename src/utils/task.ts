@@ -31,7 +31,7 @@ export function isTaskItem(value: unknown): value is TaskItem {
 }
 
 export function generateId(prefix: string): string {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return `${prefix}_${crypto.randomUUID()}`;
 }
 
 export function createTask(input: TaskFormInput): TaskItem {
@@ -115,13 +115,9 @@ export function getWeekTaskGroups(tasks: TaskItem[]): WeekTaskGroup[] {
     return {
       dateKey,
       label: formatWeekLabel(dateKey),
-      tasks: sortTasksByDeadline(groupTasks),
+      tasks: groupTasks,
     };
   });
-}
-
-export function getRecentTasks(tasks: TaskItem[], limit = 5): TaskItem[] {
-  return sortTasksByDeadline(tasks).slice(0, limit);
 }
 
 export function updateTaskItem(task: TaskItem, input: TaskFormInput): TaskItem {
