@@ -112,7 +112,9 @@ function compareByDeadline(firstTask: TaskItem, secondTask: TaskItem) {
     return firstDeadline - secondDeadline;
   }
 
-  return dayjs(secondTask.createdAt).valueOf() - dayjs(firstTask.createdAt).valueOf();
+  return (
+    dayjs(secondTask.createdAt).valueOf() - dayjs(firstTask.createdAt).valueOf()
+  );
 }
 
 export function compareTasksByRecommended(

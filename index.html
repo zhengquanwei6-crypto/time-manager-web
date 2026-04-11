@@ -3,27 +3,49 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>时间管理 Web</title>
     <meta
       name="description"
-      content="一个面向个人使用的时间管理 Web 应用，支持任务管理、今日与本周视图、番茄钟和完成统计。"
+      content="一个轻量、清晰、适合日常使用的时间管理工具，支持今日任务、本周视图、番茄钟和完成统计。"
     />
+    <meta
+      name="keywords"
+      content="时间管理,任务管理,今日任务,番茄钟,效率工具,待办清单"
+    />
+    <meta name="application-name" content="时间管理 Web" />
+    <meta name="apple-mobile-web-app-title" content="时间管理 Web" />
     <meta name="theme-color" content="#2563eb" />
     <meta name="robots" content="index,follow" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="时间管理 Web" />
+    <meta property="og:locale" content="zh_CN" />
     <meta property="og:title" content="时间管理 Web" />
     <meta
       property="og:description"
-      content="管理任务、专注计时，并用更轻量的方式追踪你的完成情况。"
+      content="把任务、时间安排和专注节奏放到同一个工作台里，帮助你更快决定今天先做什么。"
     />
-    <meta property="og:locale" content="zh_CN" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="/og-cover.svg" />
+    <meta property="og:image:alt" content="时间管理 Web 的分享封面" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="时间管理 Web" />
     <meta
       name="twitter:description"
-      content="支持任务管理、番茄钟和完成统计的轻量时间管理工具。"
+      content="支持今日任务、本周视图、番茄钟和完成统计的轻量时间管理网站。"
     />
+    <meta name="twitter:image" content="/og-cover.svg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "时间管理 Web",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "zh-CN",
+        "description": "一个轻量、清晰、适合日常使用的时间管理工具，支持今日任务、本周视图、番茄钟和完成统计。"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

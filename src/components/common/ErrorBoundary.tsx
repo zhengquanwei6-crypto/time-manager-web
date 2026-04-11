@@ -32,9 +32,9 @@ export class ErrorBoundary extends Component<
       return (
         <div className="page-stack" style={{ padding: '32px' }}>
           <div className="panel">
-            <h2 className="section-title">页面出错了</h2>
+            <h2 className="section-title">页面暂时出了点问题</h2>
             <p className="section-description">
-              应用遇到了一个意外错误，请尝试刷新页面。
+              应用遇到了意外错误。你可以先刷新页面，再继续处理今天的任务。
             </p>
             <p className="form-error">
               {this.state.error?.message ?? '未知错误'}

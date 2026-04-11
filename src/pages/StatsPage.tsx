@@ -11,14 +11,14 @@ export function StatsPage() {
   return (
     <div className="page-stack">
       <PageHeader
-        title="统计页"
-        description="这里直接基于当前任务数据计算结果，所以任务在其他页面的新增、编辑、删除和完成状态都会同步反映在这里。"
+        title="完成统计"
+        description="这里直接基于当前任务数据实时计算结果，所以其他页面的增删改查会立即同步到这里。"
       />
 
       <section className="stats-grid">
         <StatCard label="总任务数" value={stats.totalCount} description="所有任务数量" />
         <StatCard label="已完成" value={stats.completedCount} description="已完成任务数量" />
-        <StatCard label="未完成" value={stats.activeCount} description="还待处理的任务" />
+        <StatCard label="未完成" value={stats.activeCount} description="仍待处理的任务数量" />
         <StatCard
           label="今日完成"
           value={stats.todayCompletedCount}

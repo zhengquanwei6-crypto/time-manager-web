@@ -6,34 +6,42 @@ import { formatPomodoroStatus } from '../../utils/pomodoro';
 
 type ThemeMode = 'light' | 'dark';
 
-const THEME_STORAGE_KEY = 'time-manager.theme';
+interface NavItem {
+  to: string;
+  label: string;
+  description: string;
+  end?: boolean;
+}
 
-const navItems = [
+const THEME_STORAGE_KEY = 'time-manager.theme';
+const SITE_NAME = '时间管理 Web';
+
+const navItems: NavItem[] = [
   {
     to: '/',
     label: '仪表盘',
-    description: '查看任务总览、番茄钟状态和整体进度。',
+    description: '查看今日概览、番茄钟状态和整体任务进度。',
     end: true,
   },
   {
     to: '/today',
     label: '今日任务',
-    description: '聚焦今天要处理的任务，快速决定下一步。',
+    description: '聚焦今天要处理的任务，快速决定下一步做什么。',
   },
   {
     to: '/week',
     label: '本周视图',
-    description: '按日期查看本周任务安排。',
+    description: '按日期查看本周任务安排，检查节奏是否合理。',
   },
   {
     to: '/pomodoro',
     label: '番茄钟',
-    description: '开始专注计时并跟踪当前状态。',
+    description: '开始专注倒计时，用更稳定的节奏推进任务。',
   },
   {
     to: '/stats',
     label: '统计',
-    description: '查看完成情况和今日进展。',
+    description: '查看完成情况和本周推进效果。',
   },
 ];
 
@@ -51,6 +59,32 @@ function getInitialTheme(): ThemeMode {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
     ? 'dark'
     : 'light';
+}
+
+function ensureMetaTag(attribute: 'name' | 'property', value: string) {
+  let meta = document.head.querySelector<HTMLMetaElement>(
+    `meta[${attribute}="${value}"]`,
+  );
+
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute(attribute, value);
+    document.head.appendChild(meta);
+  }
+
+  return meta;
+}
+
+function ensureCanonicalLink() {
+  let link = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+
+  if (!link) {
+    link = document.createElement('link');
+    link.rel = 'canonical';
+    document.head.appendChild(link);
+  }
+
+  return link;
 }
 
 export function AppShell() {
@@ -71,28 +105,51 @@ export function AppShell() {
         item.end
           ? location.pathname === item.to
           : location.pathname.startsWith(item.to),
-      ),
+      ) ?? null,
     [location.pathname],
   );
 
-  const currentPageLabel = currentNavItem?.label ?? '仪表盘';
+  const isNotFoundRoute = currentNavItem === null;
+  const currentPageLabel = currentNavItem?.label ?? '页面不存在';
   const currentPageDescription =
-    currentNavItem?.description ?? '管理任务、专注时间和完成进度。';
+    currentNavItem?.description ?? '你访问的页面不存在，请返回主要页面继续使用。';
 
   useEffect(() => {
-    document.title = `${currentPageLabel} | 时间管理 Web`;
+    const fullTitle = `${currentPageLabel} | ${SITE_NAME}`;
+    const canonicalUrl = `${window.location.origin}${location.pathname}`;
 
-    const descriptionMeta = document.querySelector('meta[name="description"]');
+    document.title = fullTitle;
 
-    if (descriptionMeta) {
-      descriptionMeta.setAttribute('content', currentPageDescription);
-    }
-  }, [currentPageDescription, currentPageLabel]);
+    ensureMetaTag('name', 'description').setAttribute(
+      'content',
+      currentPageDescription,
+    );
+    ensureMetaTag('property', 'og:title').setAttribute('content', fullTitle);
+    ensureMetaTag('property', 'og:description').setAttribute(
+      'content',
+      currentPageDescription,
+    );
+    ensureMetaTag('property', 'og:url').setAttribute('content', canonicalUrl);
+    ensureMetaTag('name', 'twitter:title').setAttribute('content', fullTitle);
+    ensureMetaTag('name', 'twitter:description').setAttribute(
+      'content',
+      currentPageDescription,
+    );
+    ensureMetaTag('name', 'robots').setAttribute(
+      'content',
+      isNotFoundRoute ? 'noindex,nofollow' : 'index,follow',
+    );
+    ensureCanonicalLink().href = canonicalUrl;
+  }, [currentPageDescription, currentPageLabel, isNotFoundRoute, location.pathname]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    ensureMetaTag('name', 'theme-color').setAttribute(
+      'content',
+      theme === 'dark' ? '#08101f' : '#2563eb',
+    );
   }, [theme]);
 
   useEffect(() => {
@@ -139,7 +196,8 @@ export function AppShell() {
     </nav>
   );
 
-  const themeButtonLabel = theme === 'light' ? '切换深色' : '切换浅色';
+  const themeButtonLabel =
+    theme === 'light' ? '切换到深色模式' : '切换到浅色模式';
 
   return (
     <div className="app-shell">
@@ -150,7 +208,7 @@ export function AppShell() {
       <header className="mobile-topbar">
         <div className="mobile-topbar-main">
           <div>
-            <p className="mobile-topbar-kicker">时间管理 Web</p>
+            <p className="mobile-topbar-kicker">{SITE_NAME}</p>
             <strong className="mobile-topbar-title">{currentPageLabel}</strong>
           </div>
 
@@ -223,10 +281,10 @@ export function AppShell() {
 
       <aside className="app-sidebar">
         <div className="brand-block">
-          <p className="brand-kicker">时间管理 Web</p>
-          <h1 className="brand-title">更清晰地安排今天</h1>
+          <p className="brand-kicker">{SITE_NAME}</p>
+          <h1 className="brand-title">更清楚地安排今天</h1>
           <p className="brand-description">
-            把任务、时间安排和专注节奏放到同一个工作台里，减少来回切页和临时记忆负担。
+            把任务、时间安排和专注节奏放进同一个工作台里，减少来回切页和临时记忆负担。
           </p>
         </div>
 

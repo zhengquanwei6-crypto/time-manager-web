@@ -44,14 +44,14 @@ export function DashboardPage() {
     }
 
     deleteTask(taskId);
-    showToast('任务已删除');
+    showToast('任务已移除', 'info');
   };
 
   return (
     <div className="page-stack">
       <PageHeader
-        title="任务总览"
-        description="这里作为第一条可用闭环的主入口：新增任务、查看列表、切换完成状态，都先在这个页面完成。"
+        title="任务仪表盘"
+        description="这里是最适合开始一天工作的入口。你可以快速新增任务、查看今天的节奏，并直接处理当前任务列表。"
       />
 
       <section className="panel dashboard-overview">
@@ -59,11 +59,11 @@ export function DashboardPage() {
           <div>
             <h3 className="section-title">今日概览</h3>
             <p className="section-description">
-              手机端会优先把这里放到前面，帮助你先看清今天要处理什么。
+              先看清今天有多少任务、还剩多少待处理，再进入更聚焦的今日任务页。
             </p>
           </div>
           <Link className="text-link" to="/today">
-            查看今日任务
+            打开今日任务页
           </Link>
         </div>
         <div className="overview-grid">
@@ -76,14 +76,14 @@ export function DashboardPage() {
             <strong className="overview-value">{todayActiveCount}</strong>
           </div>
           <div className="overview-item">
-            <span className="overview-label">今日完成</span>
+            <span className="overview-label">今日已完成</span>
             <strong className="overview-value">{stats.todayCompletedCount}</strong>
           </div>
         </div>
       </section>
 
       <section className="stats-grid dashboard-stats">
-        <StatCard label="总任务数" value={stats.totalCount} description="当前任务总数" />
+        <StatCard label="总任务数" value={stats.totalCount} description="当前任务总量" />
         <StatCard
           label="已完成"
           value={stats.completedCount}
@@ -92,12 +92,12 @@ export function DashboardPage() {
         <StatCard
           label="今日完成"
           value={stats.todayCompletedCount}
-          description="今天完成的任务数量"
+          description="今天已经完成的任务数量"
         />
         <StatCard
           label="完成率"
           value={`${stats.completionRate}%`}
-          description="根据当前任务即时计算"
+          description="根据当前任务实时计算"
         />
       </section>
 
@@ -107,7 +107,7 @@ export function DashboardPage() {
             {editingTask ? '编辑任务' : '新增任务'}
           </h3>
           <p className="section-description">
-            第一版先保留最基础的任务表单，只输入标题和截止时间。提交后，下面的任务列表会立即刷新。
+            先用最轻量的方式记下要做的事。提交后，下方任务列表会立即刷新。
           </p>
 
           <TaskForm
@@ -121,7 +121,7 @@ export function DashboardPage() {
         <div className="panel dashboard-pomodoro-panel">
           <h3 className="section-title">番茄钟概览</h3>
           <p className="section-description">
-            这里先展示基础倒计时状态，完整操作在番茄钟页中进行。
+            这里先显示当前倒计时状态。完整专注操作可以在番茄钟页继续进行。
           </p>
           <div className="info-list">
             <div className="info-row">
@@ -142,14 +142,14 @@ export function DashboardPage() {
       <section className="panel dashboard-tasks-panel">
         <div className="section-header">
           <div>
-            <h3 className="section-title">最近任务</h3>
+            <h3 className="section-title">当前任务列表</h3>
             <p className="section-description">
-              这里展示当前所有任务。你可以直接勾选完成，页面会立即更新，刷新浏览器后数据也会保留。
+              这里展示当前所有任务。你可以直接勾选完成、修改内容，或移除不再需要的任务。
             </p>
           </div>
           <div className="section-link-group">
             <Link className="text-link" to="/today">
-              去今日视图
+              去今日任务页
             </Link>
             <Link className="text-link" to="/week">
               去本周视图

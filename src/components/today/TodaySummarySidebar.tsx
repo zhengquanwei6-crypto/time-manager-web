@@ -25,23 +25,23 @@ const sortOptions: Array<{
 }> = [
   {
     value: 'recommended',
-    label: '推荐',
-    description: '逾期、优先级和截止时间综合排序',
+    label: '推荐排序',
+    description: '综合逾期、优先级和截止时间排序。',
   },
   {
     value: 'priority',
     label: '按优先级',
-    description: '高优先级任务排在最前面',
+    description: '高优先级任务排在最前面。',
   },
   {
     value: 'deadline',
     label: '按截止时间',
-    description: '越接近截止时间越靠前',
+    description: '越接近截止时间越靠前。',
   },
   {
     value: 'status',
     label: '按状态',
-    description: '待处理任务优先展示',
+    description: '优先展示仍待处理的任务。',
   },
 ];
 
@@ -109,8 +109,8 @@ export function TodaySummarySidebar({
         </h2>
         <p className="section-description">
           {coreTask
-            ? '这是系统按优先级、逾期情况和截止时间推荐的第一件事。'
-            : '今天还没有核心任务，先安排一条最重要的事情。'}
+            ? '这是系统根据优先级、逾期情况和截止时间推荐的第一件事。'
+            : '今天还没有核心任务。先安排一条最重要的事情，再开始推进。'}
         </p>
       </section>
 
@@ -148,7 +148,7 @@ export function TodaySummarySidebar({
         <p className="section-description">
           {draggingTaskTitle
             ? `正在拖动：${draggingTaskTitle}`
-            : '也可以直接在任务卡片里点高 / 中 / 低按钮调整。'}
+            : '也可以直接在任务卡片里点击高 / 中 / 低按钮调整。'}
         </p>
 
         <div className="today-v2-drop-grid">

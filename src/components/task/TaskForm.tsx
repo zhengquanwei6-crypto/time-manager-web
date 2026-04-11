@@ -93,7 +93,7 @@ export function TaskForm({
       </div>
 
       <p id={hintId} className="form-hint">
-        支持快捷键：Ctrl/Cmd + Enter 提交，Esc 取消编辑。
+        快捷键：`Ctrl/Cmd + Enter` 提交，`Esc` 取消编辑。
       </p>
 
       {errorMessage ? <p className="form-error">{errorMessage}</p> : null}

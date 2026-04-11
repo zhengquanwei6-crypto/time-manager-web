@@ -7,13 +7,12 @@ import {
 } from '../utils/storage';
 
 const STORAGE_DEBOUNCE_MS = 300;
-
 const DEFAULT_DURATION_SECONDS = 25 * 60;
 
 function notifyPomodoroFinished(): void {
   if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification('番茄钟完成', {
-      body: '休息一下吧！',
+    new Notification('番茄钟结束了', {
+      body: '休息一下，再开始下一轮吧。',
       icon: '/favicon.svg',
     });
   }
@@ -28,7 +27,10 @@ function notifyPomodoroFinished(): void {
     oscillator.type = 'sine';
     gainNode.gain.value = 0.3;
     oscillator.start();
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.001,
+      audioContext.currentTime + 0.8,
+    );
     oscillator.stop(audioContext.currentTime + 0.8);
     window.setTimeout(() => {
       void audioContext.close();

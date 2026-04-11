@@ -1,0 +1,25 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" rx="40" fill="#EEF4FF"/>
+  <rect x="34" y="34" width="1132" height="562" rx="32" fill="url(#bg)"/>
+  <circle cx="955" cy="154" r="132" fill="#DBEAFE"/>
+  <circle cx="1028" cy="490" r="124" fill="#E0F2FE"/>
+  <rect x="94" y="92" width="500" height="88" rx="24" fill="white" fill-opacity="0.92"/>
+  <text x="132" y="148" fill="#2563EB" font-size="28" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">时间管理 Web</text>
+  <text x="96" y="278" fill="#0F172A" font-size="76" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-weight="800">先看清今天</text>
+  <text x="96" y="356" fill="#0F172A" font-size="76" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-weight="800">再开始推进</text>
+  <text x="96" y="430" fill="#475569" font-size="28" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif">任务、番茄钟、完成统计放到同一个轻量工作台里。</text>
+  <rect x="96" y="490" width="232" height="64" rx="20" fill="#2563EB"/>
+  <text x="146" y="531" fill="white" font-size="28" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">今日任务工作台</text>
+  <rect x="744" y="170" width="320" height="146" rx="28" fill="white" fill-opacity="0.92"/>
+  <text x="786" y="224" fill="#64748B" font-size="22" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif">今日完成率</text>
+  <text x="788" y="288" fill="#0F172A" font-size="68" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-weight="800">78%</text>
+  <rect x="690" y="356" width="374" height="164" rx="30" fill="white" fill-opacity="0.92"/>
+  <text x="736" y="420" fill="#0F172A" font-size="34" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-weight="700">核心任务优先</text>
+  <text x="736" y="470" fill="#475569" font-size="24" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif">更快决定下一步做什么</text>
+  <defs>
+    <linearGradient id="bg" x1="94" y1="54" x2="1092" y2="570" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F8FBFF"/>
+    </linearGradient>
+  </defs>
+</svg>

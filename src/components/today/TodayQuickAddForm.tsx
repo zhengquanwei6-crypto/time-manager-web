@@ -157,7 +157,7 @@ export function TodayQuickAddForm({
       </div>
 
       <p id={helperId} className="form-hint">
-        新任务默认会带上截止时间和优先级，你可以稍后再改，不会丢失当前输入。
+        新任务默认会带上截止时间和优先级。你可以先快速记下，再继续细调。
       </p>
 
       {errorMessage ? <p className="form-error">{errorMessage}</p> : null}

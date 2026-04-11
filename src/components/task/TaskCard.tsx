@@ -41,7 +41,7 @@ export function TaskCard({
               className="task-checkbox"
               type="checkbox"
               checked={task.completed}
-              aria-label={task.completed ? '恢复到待处理' : '标记为完成'}
+              aria-label={task.completed ? '恢复为待处理' : '标记为已完成'}
               onChange={() => onToggleTaskCompleted?.(task.id)}
             />
             <h3 className="task-card-title">{task.title}</h3>
@@ -75,7 +75,7 @@ export function TaskCard({
         <button
           className="button button-primary task-action-button"
           type="button"
-          aria-label={task.completed ? '恢复到待处理' : '标记为完成'}
+          aria-label={task.completed ? '恢复为待处理' : '标记为已完成'}
           onClick={() => onToggleTaskCompleted?.(task.id)}
         >
           {task.completed ? '继续处理' : '做完了'}

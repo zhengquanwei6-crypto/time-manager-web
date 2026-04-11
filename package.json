@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite --configLoader native",
-    "build": "tsc -b && vite build --configLoader native",
+    "build": "tsc -b && vite build --configLoader native && node scripts/postbuild-seo-assets.mjs",
     "lint": "eslint .",
-    "preview": "vite preview --configLoader native"
+    "preview": "vite preview --configLoader native",
+    "seo:generate": "node scripts/postbuild-seo-assets.mjs"
   },
   "dependencies": {
     "dayjs": "^1.11.20",

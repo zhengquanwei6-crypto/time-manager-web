@@ -3,7 +3,7 @@ interface PageLoadingProps {
 }
 
 export function PageLoading({
-  message = '正在加载页面，请稍候…',
+  message = '页面正在加载，请稍候…',
 }: PageLoadingProps) {
   return (
     <div className="page-stack">

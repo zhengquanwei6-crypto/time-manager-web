@@ -45,7 +45,7 @@ function isTaskStillInToday(task: TaskItem) {
 
 function getPriorityDescription(priority: TaskPriority) {
   if (priority === 'high') {
-    return '今天最先处理';
+    return '今天优先处理';
   }
 
   if (priority === 'medium') {
@@ -202,7 +202,7 @@ export function TodayPage() {
         if (isTaskStillInToday(updatedTask)) {
           announce('已保存任务修改。');
         } else {
-          announce('已保存，但这条任务已移出今日任务。', 'info');
+          announce('已保存，但这条任务已经移出今日任务。', 'info');
         }
 
         return;
@@ -211,7 +211,7 @@ export function TodayPage() {
       const createdTask = addTask(input);
       setRecentlyAddedTaskId(createdTask.id);
       announce(
-        `已添加任务，并设为${TASK_PRIORITY_LABELS[createdTask.priority]}优先级。`,
+        `已添加任务，并设为 ${TASK_PRIORITY_LABELS[createdTask.priority]} 优先级。`,
       );
 
       window.setTimeout(() => {
@@ -267,7 +267,7 @@ export function TodayPage() {
     (taskId: string, priority: TaskPriority) => {
       updateTaskPriority(taskId, priority);
       announce(
-        `已设为${TASK_PRIORITY_LABELS[priority]}优先级，${getPriorityDescription(priority)}。`,
+        `已设为 ${TASK_PRIORITY_LABELS[priority]} 优先级，${getPriorityDescription(priority)}。`,
         'info',
       );
     },
@@ -330,7 +330,7 @@ export function TodayPage() {
 
       if (selectedTasks.length) {
         announce(
-          `已将 ${selectedTasks.length} 条任务设为${TASK_PRIORITY_LABELS[priority]}优先级。`,
+          `已将 ${selectedTasks.length} 条任务设为 ${TASK_PRIORITY_LABELS[priority]} 优先级。`,
           'info',
         );
       }
@@ -369,7 +369,7 @@ export function TodayPage() {
 
       updateTaskPriority(draggingTaskId, priority);
       announce(
-        `已把“${draggingTask?.title ?? '任务'}”调整为${TASK_PRIORITY_LABELS[priority]}优先级。`,
+        `已把“${draggingTask?.title ?? '任务'}”调整为 ${TASK_PRIORITY_LABELS[priority]} 优先级。`,
         'info',
       );
       setDraggingTaskId(null);
@@ -410,7 +410,7 @@ export function TodayPage() {
           </h1>
           <p className="today-v2-description">
             {coreTask
-              ? `建议先处理这条${TASK_PRIORITY_LABELS[coreTask.priority]}优先级任务。它会直接影响今天的推进节奏。`
+              ? `建议先处理这条 ${TASK_PRIORITY_LABELS[coreTask.priority]} 优先级任务。它会直接影响今天的推进节奏。`
               : '今天还没有任务。先用下面的表单记下一条最重要的任务，再开始推进。'}
           </p>
           <div className="today-v2-core-actions">
@@ -479,7 +479,7 @@ export function TodayPage() {
                 </h2>
               </div>
               <Link className="text-link" to="/">
-                回到总览
+                返回仪表盘
               </Link>
             </div>
 
@@ -524,7 +524,7 @@ export function TodayPage() {
             <section className="panel today-v2-batch-bar" aria-label="批量操作">
               <div>
                 <strong>已选择 {selectedVisibleTaskIds.length} 条任务</strong>
-                <p>可以一次性完成、恢复、删除，或直接批量改优先级。</p>
+                <p>可以一次性完成、恢复、删除，或者直接批量修改优先级。</p>
               </div>
 
               <div className="today-v2-batch-actions">

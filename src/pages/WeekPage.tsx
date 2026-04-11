@@ -42,25 +42,25 @@ export function WeekPage() {
     }
 
     deleteTask(taskId);
-    showToast('任务已删除');
+    showToast('任务已移除', 'info');
   };
 
   return (
     <div className="page-stack">
       <PageHeader
         title="本周视图"
-        description="这里按日期分组展示本周任务，帮助你确认本周安排和统计页中的数据是否一致。"
+        description="按日期查看本周任务安排，更容易检查每一天的工作量是否合理。"
       />
 
       <section className="two-column-grid">
         <div className="panel">
           <h3 className="section-title">
-            {editingTask ? '编辑本周任务' : '页面说明'}
+            {editingTask ? '编辑本周任务' : '查看说明'}
           </h3>
           {editingTask ? (
             <>
               <p className="section-description">
-                保存后，本周分组和其他页面会立刻按新的截止时间重新刷新。
+                保存后，本周分组和其他页面会立即按新的截止时间更新。
               </p>
               <TaskForm
                 key={editingTask.id}
@@ -72,10 +72,10 @@ export function WeekPage() {
           ) : (
             <>
               <p className="section-description">
-                本周页先专注做查看和整理。新增任务建议在任务总览完成，再回到这里检查分组是否正确。
+                本周页更适合查看和整理安排。新增任务建议在仪表盘完成，再回到这里检查分布。
               </p>
               <Link className="button button-primary inline-link-button" to="/">
-                去任务总览新增任务
+                去仪表盘新增任务
               </Link>
             </>
           )}
@@ -83,7 +83,7 @@ export function WeekPage() {
 
         <div className="panel">
           <h3 className="section-title">本周筛选</h3>
-          <p className="section-description">先做最简单的状态筛选，不增加复杂排序。</p>
+          <p className="section-description">先保留最基础的状态筛选，减少操作负担。</p>
           <TaskFilters value={filter} onChange={setFilter} />
         </div>
       </section>
@@ -91,7 +91,7 @@ export function WeekPage() {
       {groups.length === 0 ? (
         <EmptyState
           title="本周还没有任务"
-          description="可以先去任务总览新增一条本周截止的任务，再回来看这里的分组展示。"
+          description="可以先去仪表盘新增一条本周截止的任务，再回来查看分组展示。"
         />
       ) : (
         groups.map((group) => (
@@ -99,8 +99,8 @@ export function WeekPage() {
             <h3 className="section-title">{group.label}</h3>
             <TaskList
               tasks={group.tasks}
-              emptyTitle="当前分组没有任务"
-              emptyDescription="这一组数据暂时为空。"
+              emptyTitle="这一天暂时没有任务"
+              emptyDescription="可以切换筛选条件，或者继续安排本周计划。"
               onToggleTaskCompleted={toggleTaskCompleted}
               onEditTask={setEditingTask}
               onDeleteTask={handleDeleteTask}

@@ -32,7 +32,7 @@ export function PomodoroPage() {
     <div className="page-stack">
       <PageHeader
         title="番茄钟"
-        description="专注倒计时，计时结束后会通过声音和浏览器通知提醒你。"
+        description="开始一段专注倒计时。结束后会通过声音和浏览器通知提醒你。"
       />
 
       <section className="two-column-grid">
@@ -55,7 +55,7 @@ export function PomodoroPage() {
           <p className="section-description">
             {isIdle
               ? '选择你想要的专注时长，然后点击开始。'
-              : '计时进行中无法切换时长，请先重置。'}
+              : '计时进行中不能切换时长，请先重置。'}
           </p>
           <div className="duration-options">
             {DURATION_OPTIONS.map((minutes) => (

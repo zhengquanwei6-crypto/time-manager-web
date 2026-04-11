@@ -1,0 +1,18 @@
+{
+  "name": "时间管理 Web",
+  "short_name": "时间管理",
+  "description": "一个轻量、清晰、适合日常使用的时间管理工具。",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0f4fa",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
