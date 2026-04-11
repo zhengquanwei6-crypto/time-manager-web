@@ -18,6 +18,7 @@ export function TimerControls({
       <button
         className="button button-primary timer-button"
         type="button"
+        aria-label="开始番茄钟"
         onClick={onStart}
         disabled={status === 'running'}
       >
@@ -26,6 +27,7 @@ export function TimerControls({
       <button
         className="button button-secondary timer-button"
         type="button"
+        aria-label="暂停番茄钟"
         onClick={onPause}
         disabled={status !== 'running'}
       >
@@ -34,6 +36,7 @@ export function TimerControls({
       <button
         className="button button-secondary timer-button"
         type="button"
+        aria-label="重置番茄钟"
         onClick={onReset}
       >
         重置

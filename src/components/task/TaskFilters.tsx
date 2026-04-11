@@ -13,7 +13,7 @@ const filterOptions: Array<{ label: string; value: TaskFilterValue }> = [
 
 export function TaskFilters({ value, onChange }: TaskFiltersProps) {
   return (
-    <div className="filter-row">
+    <div className="filter-row" role="toolbar" aria-label="任务筛选">
       {filterOptions.map((option) => (
         <button
           key={option.value}
@@ -23,6 +23,7 @@ export function TaskFilters({ value, onChange }: TaskFiltersProps) {
               : 'button button-secondary button-filter'
           }
           type="button"
+          aria-pressed={option.value === value}
           onClick={() => onChange(option.value)}
         >
           {option.label}

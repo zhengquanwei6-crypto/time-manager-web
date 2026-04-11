@@ -53,7 +53,9 @@ export function PomodoroTimer({
             transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
           />
         </svg>
-        <p className="pomodoro-time">{formatTime(remainingSeconds)}</p>
+        <p className="pomodoro-time" aria-live="polite">
+          {formatTime(remainingSeconds)}
+        </p>
       </div>
       <p className="pomodoro-status">状态：{formatPomodoroStatus(status)}</p>
     </section>

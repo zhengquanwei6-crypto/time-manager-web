@@ -24,7 +24,7 @@ export function TaskList({
   }
 
   return (
-    <div className="task-list">
+    <div className="task-list" role="list" aria-label="任务列表">
       {tasks.map((task) => (
         <TaskCard
           key={task.id}

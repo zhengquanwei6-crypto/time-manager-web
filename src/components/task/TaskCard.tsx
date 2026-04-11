@@ -29,7 +29,10 @@ export function TaskCard({
   };
 
   return (
-    <article className={`task-card ${task.completed ? 'task-card-completed' : ''}`}>
+    <article
+      className={`task-card ${task.completed ? 'task-card-completed' : ''}`}
+      aria-label={`任务：${task.title}`}
+    >
       <div className="task-card-main">
         <div className="task-card-title-row">
           <label className="task-check-row">
@@ -37,6 +40,7 @@ export function TaskCard({
               className="task-checkbox"
               type="checkbox"
               checked={task.completed}
+              aria-label={task.completed ? '恢复为未完成' : '标记为完成'}
               onChange={() => onToggleTaskCompleted?.(task.id)}
             />
             <h3 className="task-card-title">{task.title}</h3>
@@ -70,6 +74,7 @@ export function TaskCard({
         <button
           className="button button-primary task-action-button"
           type="button"
+          aria-label={task.completed ? '恢复为未完成' : '标记为完成'}
           onClick={() => onToggleTaskCompleted?.(task.id)}
         >
           {task.completed ? '恢复未完成' : '标记完成'}
@@ -77,6 +82,7 @@ export function TaskCard({
         <button
           className="button button-secondary task-action-button"
           type="button"
+          aria-label={`编辑任务 ${task.title}`}
           onClick={() => onEditTask?.(task)}
         >
           编辑
@@ -84,6 +90,7 @@ export function TaskCard({
         <button
           className="button button-danger task-action-button"
           type="button"
+          aria-label={`删除任务 ${task.title}`}
           onClick={handleDeleteConfirm}
         >
           删除

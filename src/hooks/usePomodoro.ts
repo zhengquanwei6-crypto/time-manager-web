@@ -14,7 +14,7 @@ function notifyPomodoroFinished(): void {
   if ('Notification' in window && Notification.permission === 'granted') {
     new Notification('番茄钟完成', {
       body: '休息一下吧！',
-      icon: '/vite.svg',
+      icon: '/favicon.svg',
     });
   }
 
@@ -30,6 +30,9 @@ function notifyPomodoroFinished(): void {
     oscillator.start();
     gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.8);
     oscillator.stop(audioContext.currentTime + 0.8);
+    window.setTimeout(() => {
+      void audioContext.close();
+    }, 900);
   } catch {
     // Audio not supported, silently ignore
   }

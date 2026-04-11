@@ -4,6 +4,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -21,6 +25,11 @@ a {
   text-decoration: none;
 }
 
+img {
+  display: block;
+  max-width: 100%;
+}
+
 button,
 input {
   font: inherit;
@@ -32,6 +41,23 @@ button {
 
 #root {
   min-height: 100vh;
+}
+
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 120;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-white);
+  transform: translateY(-150%);
+  transition: transform var(--transition-fast);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 .mobile-topbar,
@@ -102,6 +128,14 @@ button {
 .nav-link:hover {
   background: var(--color-sidebar-hover);
   color: var(--color-sidebar-text-full);
+}
+
+.nav-link:focus-visible,
+.button:focus-visible,
+.form-input:focus-visible,
+.mobile-menu-button:focus-visible {
+  outline: 3px solid var(--color-primary-focus);
+  outline-offset: 2px;
 }
 
 .nav-link-active {
@@ -377,6 +411,12 @@ button {
   margin: -4px 0 0;
   color: var(--color-danger);
   font-size: 13px;
+}
+
+.form-hint {
+  margin: -6px 0 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
 }
 
 .button-row {
@@ -801,6 +841,28 @@ button {
   border-left: 4px solid var(--color-primary);
 }
 
+.loading-panel {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  min-height: 180px;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border-subtle);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spinner-rotate 0.9s linear infinite;
+}
+
+.loading-text {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;
@@ -809,6 +871,15 @@ button {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes spinner-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -1156,5 +1227,20 @@ button {
 
   .section-title {
     font-size: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

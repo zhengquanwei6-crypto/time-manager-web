@@ -23,6 +23,20 @@ export function TaskForm({
   const isEditing = Boolean(initialTask);
   const titleId = `${formId}-title`;
   const deadlineId = `${formId}-deadline`;
+  const hintId = `${formId}-hint`;
+
+  const handleKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault();
+      event.currentTarget.form?.requestSubmit();
+    }
+
+    if (event.key === 'Escape' && isEditing && onCancel) {
+      onCancel();
+    }
+  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -57,8 +71,11 @@ export function TaskForm({
           type="text"
           placeholder="例如：完成今天的日报"
           required
+          autoFocus
+          aria-describedby={hintId}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
+          onKeyDown={handleKeyDown}
         />
       </div>
 
@@ -70,10 +87,16 @@ export function TaskForm({
           id={deadlineId}
           className="form-input"
           type="datetime-local"
+          aria-describedby={hintId}
           value={deadlineInput}
           onChange={(event) => setDeadlineInput(event.target.value)}
+          onKeyDown={handleKeyDown}
         />
       </div>
+
+      <p id={hintId} className="form-hint">
+        支持快捷键：Ctrl/Cmd + Enter 保存，Esc 取消编辑。
+      </p>
 
       {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
 
